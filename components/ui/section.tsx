@@ -17,7 +17,7 @@ export function Section({
     <section
       id={id}
       aria-labelledby={ariaLabelledBy}
-      className={`mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 ${className}`}
+      className={`mx-auto w-full max-w-6xl px-4 py-20 sm:px-6 md:py-24 lg:px-8 ${className}`}
     >
       {children}
     </section>

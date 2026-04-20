@@ -18,10 +18,10 @@ export default function ThankYouPage() {
         className="flex flex-1 flex-col items-center justify-center px-4 py-20"
       >
         <div className="max-w-lg text-center">
-          <p className="text-sm font-bold uppercase tracking-wide text-brand-primary">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-muted">
             {BRAND_NAME}
           </p>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-brand-text">
+          <h1 className="mt-3 font-serif text-4xl font-semibold tracking-tight text-brand-text">
             You&apos;re all set
           </h1>
           <p className="mt-4 text-lg text-brand-muted">
@@ -29,7 +29,7 @@ export default function ThankYouPage() {
           </p>
           <Link
             href="/"
-            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-brand-primary px-8 text-base font-bold text-white shadow-md transition hover:bg-brand-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-brand-primary px-8 text-base font-semibold text-white shadow-md transition hover:bg-brand-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
           >
             Back to home
           </Link>

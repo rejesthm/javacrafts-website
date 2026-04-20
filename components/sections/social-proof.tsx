@@ -20,10 +20,10 @@ const testimonials = [
 
 export function SocialProof() {
   return (
-    <Section aria-labelledby="proof-heading" className="py-14">
+    <Section id="gallery" aria-labelledby="proof-heading" className="py-14">
       <h2
         id="proof-heading"
-        className="text-center text-3xl font-extrabold tracking-tight text-brand-text sm:text-4xl"
+        className="text-center font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl"
       >
         Loved by people who like gifts with heart
       </h2>
@@ -34,13 +34,13 @@ export function SocialProof() {
         {testimonials.map((t) => (
           <li
             key={t.name}
-            className="flex flex-col rounded-2xl border border-brand-primary/20 bg-brand-surface p-6 shadow-sm"
+            className="flex flex-col rounded-[30px] border border-brand-primary/20 bg-brand-surface p-6 shadow-sm"
           >
             <blockquote className="flex-1 text-brand-text">
               <p className="text-lg leading-relaxed">“{t.quote}”</p>
             </blockquote>
             <footer className="mt-6 border-t border-brand-primary/10 pt-4">
-              <cite className="not-italic font-semibold text-brand-secondary">
+              <cite className="not-italic font-semibold text-brand-accent">
                 — {t.name}
               </cite>
             </footer>

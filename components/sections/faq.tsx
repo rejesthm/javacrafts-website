@@ -25,10 +25,10 @@ const faqs = [
 
 export function Faq() {
   return (
-    <Section aria-labelledby="faq-heading" className="pb-20 pt-6">
+    <Section id="faq" aria-labelledby="faq-heading" className="pb-20 pt-6">
       <h2
         id="faq-heading"
-        className="text-center text-3xl font-extrabold tracking-tight text-brand-text sm:text-4xl"
+        className="text-center font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl"
       >
         Questions, answered
       </h2>
@@ -39,9 +39,9 @@ export function Faq() {
         {faqs.map((item) => (
           <details
             key={item.q}
-            className="rounded-2xl border border-brand-primary/20 bg-brand-surface px-5 py-4 open:shadow-sm"
+            className="rounded-[30px] border border-brand-primary/20 bg-brand-surface px-5 py-4 open:shadow-sm"
           >
-            <summary className="cursor-pointer list-none text-lg font-bold text-brand-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary [&::-webkit-details-marker]:hidden">
+            <summary className="cursor-pointer list-none text-lg font-semibold text-brand-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary [&::-webkit-details-marker]:hidden">
               <span className="flex items-center justify-between gap-3">
                 {item.q}
                 <span

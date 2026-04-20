@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Montserrat, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import { OrderModalProvider } from "@/components/order-modal-provider";
 import { BRAND_NAME, OFFER } from "@/lib/site";
 
-const plusJakarta = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
   subsets: ["latin"],
   display: "swap",
 });
@@ -20,9 +27,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${plusJakarta.variable} h-full scroll-smooth`}>
+    <html
+      lang="en"
+      className={`${montserrat.variable} ${playfair.variable} h-full scroll-smooth`}
+    >
       <body className="font-sans min-h-full flex flex-col bg-brand-bg text-brand-text antialiased">
-        {children}
+        <OrderModalProvider>{children}</OrderModalProvider>
       </body>
     </html>
   );

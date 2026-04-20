@@ -30,10 +30,10 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <Section id="how-it-works" aria-labelledby="steps-heading" className="py-14">
+    <Section id="about" aria-labelledby="steps-heading" className="py-14">
       <h2
         id="steps-heading"
-        className="text-center text-3xl font-extrabold tracking-tight text-brand-text sm:text-4xl"
+        className="text-center font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl"
       >
         How ordering works
       </h2>
@@ -44,19 +44,19 @@ export function HowItWorks() {
         {steps.map((step, i) => (
           <li
             key={step.title}
-            className="flex gap-4 rounded-2xl border border-brand-primary/15 bg-brand-surface p-5 shadow-sm sm:gap-6 sm:p-6"
+            className="flex gap-4 rounded-[30px] border border-brand-primary/15 bg-brand-surface p-5 shadow-sm sm:gap-6 sm:p-6"
           >
             <span
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-primary text-lg font-black text-white"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[20px] bg-brand-primary text-lg font-bold text-white"
               aria-hidden
             >
               {step.n}
             </span>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted">
+              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-muted">
                 Step {i + 1}
               </p>
-              <h3 className="mt-1 text-xl font-bold text-brand-text">{step.title}</h3>
+              <h3 className="mt-1 text-xl font-semibold text-brand-text">{step.title}</h3>
               <p className="mt-2 text-brand-muted">{step.body}</p>
             </div>
           </li>
