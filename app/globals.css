@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  /* Warm Amber — fixed light theme */
+  --background: #fffbeb;
+  --foreground: #78350f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-primary: #d97706;
+  --color-brand-secondary: #b45309;
+  --color-brand-accent: #f59e0b;
+  --color-brand-bg: #fffbeb;
+  --color-brand-surface: #ffffff;
+  --color-brand-text: #78350f;
+  --color-brand-muted: #92400e;
+  --font-sans: var(--font-plus-jakarta);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Visible focus for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+}
+
+details[open] .faq-marker {
+  transform: rotate(45deg);
+}
