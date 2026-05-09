@@ -19,10 +19,7 @@ export default function Home() {
       <SiteHeader />
       <main id="main-content">
         <Hero />
-        <Benefits />
-        <HowItWorks />
         <SocialProof />
-        <Offer />
         <Faq />
       </main>
       <SiteFooter />

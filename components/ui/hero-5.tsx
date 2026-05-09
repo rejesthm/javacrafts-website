@@ -41,9 +41,9 @@ interface EthicalHeroBase {
    */
   subtitle: string;
   /**
-   * An array of feature objects to be displayed as cards.
+   * Optional feature cards below the hero. Omit to hide the grid.
    */
-  features: Feature[];
+  features?: Feature[];
   className?: string;
 }
 
@@ -71,7 +71,7 @@ export type EthicalHeroProps = EthicalHeroBase &
   );
 
 export function EthicalHero(props: EthicalHeroProps) {
-  const { title, subtitle, features, className } = props;
+  const { title, subtitle, features = [], className } = props;
   const ctaNode =
     "cta" in props && props.cta != null ? (
       props.cta
@@ -111,45 +111,47 @@ export function EthicalHero(props: EthicalHeroProps) {
         </motion.div>
       </div>
 
-      <motion.div
-        variants={STAGGER_CONTAINER_VARIANTS}
-        className="mt-16 grid grid-cols-1 gap-6 sm:mt-24 md:grid-cols-2 xl:grid-cols-4"
-      >
-        {features.map((feature) => (
-          <motion.a
-            key={feature.id}
-            href={feature.href}
-            aria-label={feature.title}
-            variants={FADE_UP_VARIANTS}
-            whileHover={{ scale: 1.03 }}
-            transition={{ type: "spring", stiffness: 300 }}
-            className="block"
-          >
-            <Card className="group h-full overflow-hidden rounded-xl shadow-sm transition-shadow duration-300 ease-in-out hover:shadow-md">
-              <div className="relative aspect-square w-full overflow-hidden">
-                <Image
-                  src={feature.imageUrl}
-                  alt={feature.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
-                />
-              </div>
+      {features.length > 0 ? (
+        <motion.div
+          variants={STAGGER_CONTAINER_VARIANTS}
+          className="mt-16 grid grid-cols-1 gap-6 sm:mt-24 md:grid-cols-2 xl:grid-cols-4"
+        >
+          {features.map((feature) => (
+            <motion.a
+              key={feature.id}
+              href={feature.href}
+              aria-label={feature.title}
+              variants={FADE_UP_VARIANTS}
+              whileHover={{ scale: 1.03 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="block"
+            >
+              <Card className="group h-full overflow-hidden rounded-xl shadow-sm transition-shadow duration-300 ease-in-out hover:shadow-md">
+                <div className="relative aspect-square w-full overflow-hidden">
+                  <Image
+                    src={feature.imageUrl}
+                    alt={feature.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+                  />
+                </div>
 
-              <div className="p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {feature.title}
-                  </h3>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50 transition-colors duration-300 group-hover:bg-muted">
-                    <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform duration-300 group-hover:translate-x-1" />
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {feature.title}
+                    </h3>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50 transition-colors duration-300 group-hover:bg-muted">
+                      <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform duration-300 group-hover:translate-x-1" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          </motion.a>
-        ))}
-      </motion.div>
+              </Card>
+            </motion.a>
+          ))}
+        </motion.div>
+      ) : null}
     </motion.section>
   );
 }

@@ -12,33 +12,6 @@ import {
   OFFER,
 } from "@/lib/site";
 
-const FEATURES = [
-  {
-    id: "appreciation",
-    title: "Appreciation & recognition plaques",
-    imageUrl: "/products/plaque-appreciation.png",
-    href: "#gallery",
-  },
-  {
-    id: "family",
-    title: "Family keepsakes",
-    imageUrl: "/products/plaque-family.png",
-    href: "#benefits",
-  },
-  {
-    id: "portrait",
-    title: "Portrait engravings",
-    imageUrl: "/products/plaque-portrait.png",
-    href: "#about",
-  },
-  {
-    id: "custom",
-    title: "Fully custom designs",
-    imageUrl: "/products/plaque-custom.png",
-    href: "#menu",
-  },
-] as const;
-
 export function Hero() {
   return (
     <div className="w-full bg-background">
@@ -52,7 +25,6 @@ export function Hero() {
           </>
         }
         subtitle={`${OFFER} Built for ${AUDIENCE}. Serving ${LOCATION}.`}
-        features={[...FEATURES]}
         cta={
           <Button
             size="lg"
