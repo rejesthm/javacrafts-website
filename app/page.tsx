@@ -1,10 +1,8 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { Benefits } from "@/components/sections/benefits";
 import { Faq } from "@/components/sections/faq";
 import { Hero } from "@/components/sections/hero";
-import { HowItWorks } from "@/components/sections/how-it-works";
-import { Offer } from "@/components/sections/offer";
+import { ProductPersonalization } from "@/components/sections/product-personalization";
 import { SocialProof } from "@/components/sections/social-proof";
 
 export default function Home() {
@@ -19,6 +17,7 @@ export default function Home() {
       <SiteHeader />
       <main id="main-content">
         <Hero />
+        <ProductPersonalization />
         <SocialProof />
         <Faq />
       </main>

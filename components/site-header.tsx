@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Clock } from "lucide-react";
+import { Clock, ShoppingCart } from "lucide-react";
 
+import { CartBadge } from "@/components/cart-badge";
 import { HeaderCountdown } from "@/components/header-countdown";
-import { OrderModalTrigger } from "@/components/order-modal-provider";
 import { BRAND_NAME } from "@/lib/site";
 
 const nav = [
@@ -30,9 +30,14 @@ export function SiteHeader() {
             >
               {BRAND_NAME}
             </Link>
-            <OrderModalTrigger className="inline-flex min-h-11 min-w-[7rem] items-center justify-center rounded-full bg-brand-primary px-5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition hover:bg-brand-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary lg:hidden">
-              Contact
-            </OrderModalTrigger>
+            <Link
+              href="/checkout"
+              className="relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white shadow-sm transition hover:bg-brand-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary lg:hidden"
+              aria-label="View cart"
+            >
+              <ShoppingCart className="size-5" aria-hidden />
+              <CartBadge />
+            </Link>
           </div>
           <nav
             aria-label="Primary"
@@ -48,10 +53,21 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
-          <div className="hidden justify-end lg:flex">
-            <OrderModalTrigger className="inline-flex min-h-11 min-w-[8rem] items-center justify-center rounded-full bg-brand-primary px-6 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition hover:bg-brand-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary">
-              Contact
-            </OrderModalTrigger>
+          <div className="hidden items-center justify-end gap-3 lg:flex">
+            <Link
+              href="/#personalize"
+              className="inline-flex min-h-11 min-w-[8rem] items-center justify-center rounded-full bg-brand-primary px-6 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition hover:bg-brand-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+            >
+              Order now
+            </Link>
+            <Link
+              href="/checkout"
+              className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-brand-primary/20 bg-brand-surface text-brand-text shadow-sm transition hover:border-brand-primary/40 hover:text-brand-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+              aria-label="View cart"
+            >
+              <ShoppingCart className="size-5" aria-hidden />
+              <CartBadge />
+            </Link>
           </div>
         </div>
       </div>

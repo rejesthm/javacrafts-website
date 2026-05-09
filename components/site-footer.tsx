@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { OrderModalTrigger } from "@/components/order-modal-provider";
 import { BRAND_NAME, LOCATION } from "@/lib/site";
 
 const nav = [
@@ -43,9 +42,9 @@ export function SiteFooter() {
             </p>
             <ul className="mt-4 space-y-3 text-sm text-brand-text">
               <li>
-                <OrderModalTrigger className="w-full cursor-pointer border-0 bg-transparent p-0 text-left font-inherit text-sm text-brand-text transition hover:text-brand-accent">
+                <Link href="/#personalize" className="transition hover:text-brand-accent">
                   Order
-                </OrderModalTrigger>
+                </Link>
               </li>
               <li>
                 <Link href="/#faq" className="transition hover:text-brand-accent">
@@ -78,9 +77,12 @@ export function SiteFooter() {
                 </svg>
               </a>
             </div>
-            <OrderModalTrigger className="mt-6 inline-flex min-h-10 items-center justify-center rounded-full bg-brand-primary px-5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-brand-secondary">
+            <Link
+              href="/#personalize"
+              className="mt-6 inline-flex min-h-10 items-center justify-center rounded-full bg-brand-primary px-5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-brand-secondary"
+            >
               Get in touch
-            </OrderModalTrigger>
+            </Link>
           </div>
         </div>
         <p className="mt-12 border-t border-brand-primary/10 pt-8 text-center text-sm text-brand-muted">

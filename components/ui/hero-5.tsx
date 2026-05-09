@@ -51,7 +51,7 @@ export type EthicalHeroProps = EthicalHeroBase &
   (
     | {
         /**
-         * Custom call-to-action node (e.g. `Button` + `OrderModalTrigger`).
+         * Custom call-to-action node.
          */
         cta: React.ReactNode;
         ctaLabel?: string;
