@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Section } from "@/components/ui/section";
 
 const included = [
@@ -63,14 +62,6 @@ export function Offer() {
               </p>
             </div>
           </div>
-        </div>
-        <div className="mt-10 flex flex-wrap gap-4">
-          <Link
-            href="/#personalize"
-            className="inline-flex min-h-12 min-w-[10rem] items-center justify-center rounded-full bg-brand-primary px-8 text-base font-semibold text-white shadow-md transition hover:bg-brand-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
-          >
-            Order Now
-          </Link>
         </div>
       </div>
     </Section>

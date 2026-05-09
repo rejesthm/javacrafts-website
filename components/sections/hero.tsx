@@ -1,9 +1,6 @@
 "use client";
 
-import { Gift } from "lucide-react";
-
-import { EthicalHero } from "@/components/ui/hero-5";
-import { Button } from "@/components/ui/button";
+import { EthicalHero, type HangingProductItem } from "@/components/ui/hero-5";
 import {
   AUDIENCE,
   BRAND_NAME,
@@ -11,9 +8,47 @@ import {
   OFFER,
 } from "@/lib/site";
 
+const HERO_SHOWCASE: HangingProductItem[] = [
+  {
+    id: "custom",
+    title: "Custom",
+    imageUrl: "/products/plaque-custom.png",
+    alt: "Laser-engraved wooden plaque with portrait and personalized name",
+    href: "#personalize",
+  },
+  {
+    id: "portrait",
+    title: "Portrait",
+    imageUrl: "/products/plaque-portrait.png",
+    alt: "Wooden plaque with detailed engraved portrait on a stand",
+    href: "#personalize",
+  },
+  {
+    id: "family",
+    title: "Family",
+    imageUrl: "/products/plaque-family.png",
+    alt: "Family portrait engraved on a light wood plaque",
+    href: "#personalize",
+  },
+  {
+    id: "appreciation",
+    title: "Appreciation",
+    imageUrl: "/products/plaque-appreciation.png",
+    alt: "Custom appreciation plaque with photo and ceremony details",
+    href: "#personalize",
+  },
+  {
+    id: "commemorative",
+    title: "Commemorative",
+    imageUrl: "/products/plaque-commemorative.png",
+    alt: "Commemorative wooden plaque with engraved portrait and dedication",
+    href: "#personalize",
+  },
+];
+
 export function Hero() {
   return (
-    <div className="w-full bg-background">
+    <div className="w-full bg-[radial-gradient(ellipse_120%_80%_at_50%_-15%,#faf7f2_0%,#f4ede3_45%,#f2ebe1_78%,#ebe2d6_100%)]">
       <EthicalHero
         title={
           <>
@@ -24,18 +59,7 @@ export function Hero() {
           </>
         }
         subtitle={`${OFFER} Built for ${AUDIENCE}. Serving ${LOCATION}.`}
-        cta={
-          <Button
-            size="lg"
-            className="min-h-14 gap-2 rounded-full px-12 text-base font-bold uppercase tracking-[0.12em] shadow-[0_8px_30px_-4px_rgba(43,30,22,0.45)] ring-2 ring-primary/25 ring-offset-2 ring-offset-background transition duration-200 hover:-translate-y-0.5 hover:bg-primary hover:shadow-[0_12px_40px_-6px_rgba(43,30,22,0.55)] active:translate-y-0"
-            asChild
-          >
-            <a href="#personalize">
-              <Gift className="size-5 shrink-0" aria-hidden />
-              Order now
-            </a>
-          </Button>
-        }
+        hangingItems={HERO_SHOWCASE}
       />
     </div>
   );

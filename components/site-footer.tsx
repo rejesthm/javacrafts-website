@@ -43,7 +43,7 @@ export function SiteFooter() {
             <ul className="mt-4 space-y-3 text-sm text-brand-text">
               <li>
                 <Link href="/#personalize" className="transition hover:text-brand-accent">
-                  Order
+                  Personalize
                 </Link>
               </li>
               <li>

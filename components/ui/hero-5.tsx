@@ -7,7 +7,13 @@ import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  HangingProductGallery,
+  type HangingProductItem,
+} from "@/components/ui/hanging-product-gallery";
 import { cn } from "@/lib/utils";
+
+export type { HangingProductItem } from "@/components/ui/hanging-product-gallery";
 
 const FADE_UP_VARIANTS: Variants = {
   hidden: { opacity: 0, y: 10 },
@@ -44,42 +50,33 @@ interface EthicalHeroBase {
    * Optional feature cards below the hero. Omit to hide the grid.
    */
   features?: Feature[];
+  /**
+   * Polaroid-style product cards hung from a curved rope. When set, hides the flat features grid.
+   */
+  hangingItems?: HangingProductItem[];
   className?: string;
 }
 
-export type EthicalHeroProps = EthicalHeroBase &
-  (
-    | {
-        /**
-         * Custom call-to-action node.
-         */
-        cta: React.ReactNode;
-        ctaLabel?: string;
-        ctaHref?: string;
-      }
-    | {
-        cta?: undefined;
-        /**
-         * The text label for the call-to-action button.
-         */
-        ctaLabel: string;
-        /**
-         * The URL the call-to-action button links to.
-         */
-        ctaHref: string;
-      }
-  );
+export type EthicalHeroProps = EthicalHeroBase & {
+  /** Custom call-to-action. Pass `null` to hide the CTA when defaults would otherwise show. */
+  cta?: React.ReactNode | null;
+  /** Default CTA button label when `cta` is omitted. */
+  ctaLabel?: string;
+  /** Default CTA href when `cta` is omitted. */
+  ctaHref?: string;
+};
 
 export function EthicalHero(props: EthicalHeroProps) {
-  const { title, subtitle, features = [], className } = props;
+  const { title, subtitle, features = [], hangingItems, className, cta } = props;
+  const hangingActive = Boolean(hangingItems?.length);
   const ctaNode =
-    "cta" in props && props.cta != null ? (
-      props.cta
-    ) : (
+    cta !== undefined ? (
+      cta
+    ) : props.ctaLabel != null && props.ctaHref != null ? (
       <Button size="lg" asChild>
         <a href={props.ctaHref}>{props.ctaLabel}</a>
       </Button>
-    );
+    ) : null;
 
   return (
     <motion.section
@@ -88,6 +85,7 @@ export function EthicalHero(props: EthicalHeroProps) {
       variants={STAGGER_CONTAINER_VARIANTS}
       className={cn(
         "container mx-auto max-w-6xl px-4 py-16 sm:py-24",
+        hangingActive && "relative overflow-visible pb-10 sm:pb-16 md:pb-20",
         className,
       )}
     >
@@ -106,12 +104,20 @@ export function EthicalHero(props: EthicalHeroProps) {
           {subtitle}
         </motion.p>
 
-        <motion.div variants={FADE_UP_VARIANTS} className="mt-10">
-          {ctaNode}
-        </motion.div>
+        {ctaNode ? (
+          <motion.div variants={FADE_UP_VARIANTS} className="mt-10">
+            {ctaNode}
+          </motion.div>
+        ) : null}
       </div>
 
-      {features.length > 0 ? (
+      {hangingActive && hangingItems ? (
+        <motion.div variants={FADE_UP_VARIANTS} className="mt-2 sm:mt-4">
+          <HangingProductGallery items={hangingItems} />
+        </motion.div>
+      ) : null}
+
+      {!hangingActive && features.length > 0 ? (
         <motion.div
           variants={STAGGER_CONTAINER_VARIANTS}
           className="mt-16 grid grid-cols-1 gap-6 sm:mt-24 md:grid-cols-2 xl:grid-cols-4"

@@ -74,9 +74,9 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
     {
       icon: <ClipboardList className="h-7 w-7" strokeWidth={1.75} aria-hidden />,
       stepLabel: "Step 1",
-      title: "Order & share your details",
+      title: "Share your details",
       description:
-        "Tap Order Now and tell us the name, date, or message you want engraved—or describe a custom idea.",
+        "Tell us the name, date, or message you want engraved—or describe a custom idea.",
       benefits: [
         "Space for occasion and wording notes",
         "Room for special requests or references",

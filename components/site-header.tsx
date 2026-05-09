@@ -55,12 +55,6 @@ export function SiteHeader() {
           </nav>
           <div className="hidden items-center justify-end gap-3 lg:flex">
             <Link
-              href="/#personalize"
-              className="inline-flex min-h-11 min-w-[8rem] items-center justify-center rounded-full bg-brand-primary px-6 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition hover:bg-brand-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
-            >
-              Order now
-            </Link>
-            <Link
               href="/checkout"
               className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-brand-primary/20 bg-brand-surface text-brand-text shadow-sm transition hover:border-brand-primary/40 hover:text-brand-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
               aria-label="View cart"
