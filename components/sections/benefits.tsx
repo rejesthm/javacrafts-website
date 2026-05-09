@@ -6,27 +6,29 @@ const items = [
     title: "Personalized Engraved Gifts That Last a Lifetime",
     body: "Names, dates, quotes, or inside jokes—etched with care so the moment stays with them.",
     variant: "dark" as const,
-    image:
-      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=800&q=80",
+    image: "/products/plaque-appreciation.png",
+    imageAlt:
+      "Custom wooden appreciation plaque with engraved text and photo on a wooden stand",
   },
   {
     title: "Clear, friendly updates from start to finish",
     body: "We confirm your details before production so there are no “oops” moments.",
     variant: "light" as const,
-    image:
-      "https://images.unsplash.com/photo-1513519245088-0e12902e35ca?auto=format&fit=crop&w=800&q=80",
+    image: "/products/plaque-family.png",
+    imageAlt: "Family portrait laser-engraved on a light wood plaque with decorative details",
   },
   {
     title: "Perfect for real life (and real budgets)",
     body: "Students, young pros, and couples—gift something that feels premium without the stiff vibe.",
     variant: "dark" as const,
-    image:
-      "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=800&q=80",
+    image: "/products/plaque-portrait.png",
+    imageAlt: "Personalized wooden plaque with a detailed engraved portrait on a mini easel",
   },
 ];
 
-const STRIP_IMAGE =
-  "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1400&q=80";
+const STRIP_IMAGE = "/products/plaque-custom.png";
+const STRIP_IMAGE_ALT =
+  "Custom laser-engraved wooden plaque with portrait and name on display";
 
 export function Benefits() {
   return (
@@ -56,7 +58,7 @@ export function Benefits() {
             <div className="relative h-40 shrink-0 sm:h-44">
               <Image
                 src={item.image}
-                alt=""
+                alt={item.imageAlt}
                 fill
                 className="object-cover"
                 sizes="(max-width: 640px) 100vw, 33vw"
@@ -92,7 +94,7 @@ export function Benefits() {
         <div className="relative min-h-[240px] overflow-hidden rounded-[30px] shadow-sm lg:min-h-[320px]">
           <Image
             src={STRIP_IMAGE}
-            alt="Craft workspace with natural materials"
+            alt={STRIP_IMAGE_ALT}
             fill
             className="object-cover"
             sizes="(max-width: 1024px) 100vw, 50vw"

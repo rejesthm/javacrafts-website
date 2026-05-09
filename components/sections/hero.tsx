@@ -1,54 +1,71 @@
-import Image from "next/image";
-import Link from "next/link";
-import { OrderModalTrigger } from "@/components/order-modal-provider";
-import { Section } from "@/components/ui/section";
-import { AUDIENCE, LOCATION, OFFER } from "@/lib/site";
+"use client";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1920&q=80";
+import { Gift } from "lucide-react";
+
+import { EthicalHero } from "@/components/ui/hero-5";
+import { Button } from "@/components/ui/button";
+import { OrderModalTrigger } from "@/components/order-modal-provider";
+import {
+  AUDIENCE,
+  BRAND_NAME,
+  LOCATION,
+  OFFER,
+} from "@/lib/site";
+
+const FEATURES = [
+  {
+    id: "appreciation",
+    title: "Appreciation & recognition plaques",
+    imageUrl: "/products/plaque-appreciation.png",
+    href: "#gallery",
+  },
+  {
+    id: "family",
+    title: "Family keepsakes",
+    imageUrl: "/products/plaque-family.png",
+    href: "#benefits",
+  },
+  {
+    id: "portrait",
+    title: "Portrait engravings",
+    imageUrl: "/products/plaque-portrait.png",
+    href: "#about",
+  },
+  {
+    id: "custom",
+    title: "Fully custom designs",
+    imageUrl: "/products/plaque-custom.png",
+    href: "#menu",
+  },
+] as const;
 
 export function Hero() {
   return (
-    <Section className="pb-12 pt-8 sm:pb-16 sm:pt-10">
-      <div className="relative min-h-[min(70vh,560px)] overflow-hidden rounded-[30px]">
-        <Image
-          src={HERO_IMAGE}
-          alt="Wooden workbench with craft tools"
-          fill
-          className="object-cover"
-          priority
-          sizes="(max-width: 1280px) 100vw, 1152px"
-        />
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/25"
-          aria-hidden
-        />
-        <div className="relative flex min-h-[min(70vh,560px)] flex-col justify-end px-6 py-12 sm:px-10 sm:py-16 lg:px-14">
-          <p className="mb-4 inline-flex w-fit rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
-            25% OFF on all items — limited-time welcome treat
-          </p>
-          <h1 className="font-serif text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            {OFFER}
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg text-white/90 sm:text-xl">
-            Built for {AUDIENCE}. Serving {LOCATION}.
-          </p>
-          <p className="mt-4 text-lg font-medium text-white">
-            Personalized Engraved Gifts That Last a Lifetime
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <OrderModalTrigger className="inline-flex min-h-12 min-w-[10rem] items-center justify-center rounded-full bg-white px-8 text-base font-semibold text-brand-primary shadow-md transition hover:bg-brand-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+    <div className="w-full bg-background">
+      <EthicalHero
+        title={
+          <>
+            Personalized engraved gifts
+            <br />
+            from <span className="font-serif">{BRAND_NAME}</span>,{" "}
+            <span className="text-primary">made for your story.</span>
+          </>
+        }
+        subtitle={`${OFFER} Built for ${AUDIENCE}. Serving ${LOCATION}.`}
+        features={[...FEATURES]}
+        cta={
+          <Button
+            size="lg"
+            className="min-h-14 gap-2 rounded-full px-12 text-base font-bold uppercase tracking-[0.12em] shadow-[0_8px_30px_-4px_rgba(43,30,22,0.45)] ring-2 ring-primary/25 ring-offset-2 ring-offset-background transition duration-200 hover:-translate-y-0.5 hover:bg-primary hover:shadow-[0_12px_40px_-6px_rgba(43,30,22,0.55)] active:translate-y-0"
+            asChild
+          >
+            <OrderModalTrigger>
+              <Gift className="size-5 shrink-0" aria-hidden />
               Order now
             </OrderModalTrigger>
-            <Link
-              href="#about"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-white/70 bg-transparent px-6 text-base font-semibold text-white transition hover:bg-white/10"
-            >
-              See how it works
-            </Link>
-          </div>
-        </div>
-      </div>
-    </Section>
+          </Button>
+        }
+      />
+    </div>
   );
 }

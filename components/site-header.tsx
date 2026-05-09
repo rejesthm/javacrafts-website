@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { Clock } from "lucide-react";
+
+import { HeaderCountdown } from "@/components/header-countdown";
 import { OrderModalTrigger } from "@/components/order-modal-provider";
 import { BRAND_NAME } from "@/lib/site";
 
@@ -12,6 +15,12 @@ const nav = [
 export function SiteHeader() {
   return (
     <header className="border-b border-brand-primary/10 bg-brand-bg">
+      <div className="flex items-center justify-center gap-2 bg-brand-primary px-4 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white sm:text-xs">
+        <Clock className="size-3.5 shrink-0 opacity-90 sm:size-4" aria-hidden />
+        <span className="hidden sm:inline">Welcome offer ends in</span>
+        <span className="sm:hidden">Ends in</span>
+        <HeaderCountdown />
+      </div>
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-5 lg:grid-cols-3">
           <div className="flex items-center justify-between gap-4 lg:justify-start">

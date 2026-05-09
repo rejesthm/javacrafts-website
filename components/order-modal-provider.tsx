@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  forwardRef,
   useCallback,
   useContext,
   useEffect,
@@ -28,18 +29,26 @@ export function useOrderModal() {
   return ctx;
 }
 
-export function OrderModalTrigger({
-  className,
-  children,
-  ...props
-}: ComponentProps<"button">) {
+export const OrderModalTrigger = forwardRef<
+  HTMLButtonElement,
+  ComponentProps<"button">
+>(function OrderModalTrigger({ className, children, onClick, ...props }, ref) {
   const { openOrderModal } = useOrderModal();
   return (
-    <button type="button" onClick={openOrderModal} className={className} {...props}>
+    <button
+      ref={ref}
+      type="button"
+      className={className}
+      onClick={(e) => {
+        onClick?.(e);
+        if (!e.defaultPrevented) openOrderModal();
+      }}
+      {...props}
+    >
       {children}
     </button>
   );
-}
+});
 
 function OrderModalDialog({ onClose }: { onClose: () => void }) {
   const router = useRouter();
