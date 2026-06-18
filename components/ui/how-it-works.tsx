@@ -4,6 +4,9 @@ import { cn } from "@/lib/utils";
 import { Check, ClipboardList, Package, Upload } from "lucide-react";
 import type React from "react";
 
+import { Ornament } from "@/components/ui/ornament";
+import { Reveal } from "@/components/ui/reveal";
+
 export interface HowItWorksProps extends React.HTMLAttributes<HTMLElement> {
   headingId?: string;
 }
@@ -25,25 +28,25 @@ const StepCard: React.FC<StepCardProps> = ({
 }) => (
   <article
     className={cn(
-      "group relative flex h-full flex-col overflow-hidden rounded-[30px]",
-      "border border-brand-primary/15 bg-brand-surface shadow-sm",
+      "group relative flex h-full flex-col overflow-hidden rounded-[28px]",
+      "border border-brand-primary/12 bg-brand-surface shadow-craft",
       "transition-all duration-300 ease-out",
-      "hover:-translate-y-1 hover:border-brand-primary/25 hover:shadow-xl hover:shadow-brand-primary/10"
+      "hover:-translate-y-1.5 hover:border-brand-gold/35 hover:shadow-craft-lg"
     )}
   >
     <div
-      className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-brand-primary/25 to-transparent opacity-80"
+      className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-brand-gold/60 to-transparent"
       aria-hidden
     />
     <div className="flex flex-1 flex-col p-6 sm:p-7">
       <div className="mb-5 flex items-start justify-between gap-3">
         <div
-          className="flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-primary/15 bg-gradient-to-br from-[#faf6f0] to-[#ebe3d6] text-brand-primary shadow-inner"
+          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-cream text-brand-gold ring-1 ring-brand-gold/20 transition-colors duration-300 group-hover:bg-brand-gold group-hover:text-white"
           aria-hidden
         >
           {icon}
         </div>
-        <span className="rounded-full border border-brand-primary/15 bg-secondary/60 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-brand-muted">
+        <span className="rounded-full border border-brand-gold/20 bg-brand-cream px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-brand-gold">
           {stepLabel}
         </span>
       </div>
@@ -54,7 +57,7 @@ const StepCard: React.FC<StepCardProps> = ({
       <ul className="mt-6 space-y-3 border-t border-brand-primary/10 pt-6">
         {benefits.map((benefit, index) => (
           <li key={index} className="flex gap-3 text-sm leading-relaxed text-brand-muted">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-brand-primary/15 bg-[#f5ede3] text-brand-primary">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-gold/15 text-brand-gold">
               <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
             </span>
             <span>{benefit}</span>
@@ -127,8 +130,9 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
       />
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mx-auto mb-14 max-w-2xl text-center sm:mb-16">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-muted">
+        <Reveal className="mx-auto mb-14 max-w-2xl text-center sm:mb-16">
+          <Ornament className="mb-5" />
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-gold">
             The process
           </p>
           <h2
@@ -140,18 +144,19 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
           <p className="mt-4 text-lg leading-relaxed text-brand-muted">
             From your first message to the finished piece—clear steps, human care, no jargon.
           </p>
-        </div>
+        </Reveal>
 
         <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-          {stepsData.map((step) => (
-            <StepCard
-              key={step.stepLabel}
-              icon={step.icon}
-              stepLabel={step.stepLabel}
-              title={step.title}
-              description={step.description}
-              benefits={step.benefits}
-            />
+          {stepsData.map((step, i) => (
+            <Reveal key={step.stepLabel} index={i} className="h-full">
+              <StepCard
+                icon={step.icon}
+                stepLabel={step.stepLabel}
+                title={step.title}
+                description={step.description}
+                benefits={step.benefits}
+              />
+            </Reveal>
           ))}
         </div>
       </div>

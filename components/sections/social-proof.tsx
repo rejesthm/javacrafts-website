@@ -1,8 +1,10 @@
 "use client";
 
 import { TestimonialsColumn } from "@/components/ui/testimonials-columns-1";
+import { Ornament } from "@/components/ui/ornament";
 import { Section } from "@/components/ui/section";
 import { motion } from "motion/react";
+import { Star } from "lucide-react";
 
 const testimonials = [
   {
@@ -86,16 +88,29 @@ export function SocialProof() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         viewport={{ once: true }}
-        className="flex flex-col items-center justify-center max-w-[540px] mx-auto"
+        className="flex flex-col items-center justify-center max-w-[560px] mx-auto"
       >
+        <Ornament className="mb-5" />
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-gold">
+          Loved by gift-givers
+        </p>
         <h2
           id="proof-heading"
-          className="text-balance text-center font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl"
+          className="mt-4 text-balance text-center font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl"
         >
-          Loved by people who like gifts with heart
+          Gifts that make people tear up (the good kind)
         </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-center text-lg text-brand-muted">
-          Real words from real customers—no fluff, no fake metrics.
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3 rounded-full border border-brand-gold/25 bg-brand-surface px-5 py-2.5 shadow-craft">
+          <span className="flex items-center gap-0.5" aria-hidden>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} className="size-4 fill-brand-gold text-brand-gold" />
+            ))}
+          </span>
+          <span className="text-sm font-semibold text-brand-text">4.9 / 5</span>
+          <span className="text-sm text-brand-muted">from 200+ happy orders</span>
+        </div>
+        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-brand-muted">
+          Real words from real customers — no fluff, no fake metrics.
         </p>
       </motion.div>
 

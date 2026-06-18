@@ -3,10 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { Check, ImagePlus, ShoppingBag, Trash2 } from "lucide-react";
+import { Check, ImagePlus, ShieldCheck, ShoppingBag, Trash2 } from "lucide-react";
 
 import { useCart } from "@/components/cart-provider";
 import { Button } from "@/components/ui/button";
+import { Ornament } from "@/components/ui/ornament";
+import { Reveal } from "@/components/ui/reveal";
 import { Section } from "@/components/ui/section";
 import {
   ACCEPTED_PHOTO_TYPES,
@@ -46,24 +48,75 @@ const WORK_SAMPLE_IMAGES: { src: string; alt: string; caption: string }[] = [
   },
 ];
 
-function fileToPhoto(file: File): Promise<CartPhoto> {
+/** Longest edge (px) we keep when storing the engraving photo. */
+const MAX_PHOTO_EDGE = 1400;
+const PHOTO_OUTPUT_QUALITY = 0.82;
+
+function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        reject(new Error("Could not read photo."));
-        return;
-      }
-      resolve({
-        dataUrl: reader.result,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-      });
-    };
+    reader.onload = () =>
+      typeof reader.result === "string"
+        ? resolve(reader.result)
+        : reject(new Error("Could not read photo."));
     reader.onerror = () => reject(new Error("Could not read photo."));
     reader.readAsDataURL(file);
   });
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = document.createElement("img");
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Could not decode image."));
+    img.src = src;
+  });
+}
+
+function approxBytes(dataUrl: string) {
+  const commaIndex = dataUrl.indexOf(",");
+  return Math.round((dataUrl.length - commaIndex - 1) * 0.75);
+}
+
+/**
+ * Read + downscale the photo so it fits comfortably in localStorage. We accept
+ * uploads up to {@link MAX_PHOTO_BYTES}, but a full-size base64 photo can exceed
+ * the browser's ~5MB storage budget, so we re-encode a smaller copy for the cart.
+ * Falls back to the original if anything about the resize fails.
+ */
+async function fileToPhoto(file: File): Promise<CartPhoto> {
+  const original = await readFileAsDataUrl(file);
+  try {
+    const img = await loadImage(original);
+    const scale = Math.min(1, MAX_PHOTO_EDGE / Math.max(img.width, img.height));
+    const width = Math.max(1, Math.round(img.width * scale));
+    const height = Math.max(1, Math.round(img.height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas unsupported.");
+    // White backdrop keeps transparent PNGs from turning black once flattened.
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const compressed = canvas.toDataURL("image/jpeg", PHOTO_OUTPUT_QUALITY);
+    // Only keep the re-encoded copy when it actually saves space.
+    if (compressed.length < original.length) {
+      return {
+        dataUrl: compressed,
+        name: file.name,
+        type: "image/jpeg",
+        size: approxBytes(compressed),
+      };
+    }
+  } catch {
+    // Ignore and fall back to the original below.
+  }
+
+  return { dataUrl: original, name: file.name, type: file.type, size: file.size };
 }
 
 function createId() {
@@ -71,6 +124,17 @@ function createId() {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function StepBadge({ n }: { n: number }) {
+  return (
+    <span
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold text-sm font-bold text-white shadow-craft"
+      aria-hidden
+    >
+      {n}
+    </span>
+  );
 }
 
 export function ProductPersonalization() {
@@ -95,14 +159,14 @@ export function ProductPersonalization() {
     }
 
     if (!ACCEPTED_PHOTO_TYPES.includes(file.type as (typeof ACCEPTED_PHOTO_TYPES)[number])) {
-      setError("Please upload a JPG, PNG, or WebP image.");
+      setError("That file type isn't supported. Please upload a JPG, PNG, or WebP image.");
       e.target.value = "";
       setPhoto(null);
       return;
     }
 
     if (file.size > MAX_PHOTO_BYTES) {
-      setError("Please upload an image up to 5MB.");
+      setError("That image is over 5MB. Please upload a photo up to 5MB.");
       e.target.value = "";
       setPhoto(null);
       return;
@@ -111,7 +175,7 @@ export function ProductPersonalization() {
     try {
       setPhoto(await fileToPhoto(file));
     } catch {
-      setError("Could not read that photo. Please try another image.");
+      setError("We couldn't read that photo. Please try another image.");
       setPhoto(null);
     }
   }
@@ -145,80 +209,250 @@ export function ProductPersonalization() {
   }
 
   return (
-    <Section id="personalize" aria-labelledby="personalize-heading" className="py-14">
-      <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-        <div className="relative min-h-[360px] overflow-hidden rounded-[24px] border border-brand-primary/15 bg-brand-primary shadow-sm">
-          <Image
-            src="/products/plaque-custom.png"
-            alt="Personalized wooden plaque with portrait and name on display"
-            fill
-            className="object-cover opacity-90"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-brand-primary/80 via-brand-primary/15 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white sm:p-8">
-            <h2
-              id="personalize-heading"
-              className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl"
-            >
-              Product Personalization
-            </h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-white/85 sm:text-base">
-              Choose a plaque size, upload the photo to engrave, then add the text or name
-              you want included.
-            </p>
-          </div>
-        </div>
+    <Section id="personalize" aria-labelledby="personalize-heading" className="py-16 sm:py-20">
+      <Reveal className="mx-auto max-w-2xl text-center">
+        <Ornament className="mb-5" />
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-gold">
+          Design yours in minutes
+        </p>
+        <h2
+          id="personalize-heading"
+          className="mt-4 font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl"
+        >
+          Personalize your keepsake
+        </h2>
+        <p className="mt-4 text-lg leading-relaxed text-brand-muted">
+          Pick a size, upload your photo, and add the words — watch it come together in the
+          live preview as you go.
+        </p>
+      </Reveal>
 
-        <div className="rounded-[24px] border border-brand-primary/15 bg-brand-surface p-5 shadow-sm sm:p-6">
-          <form onSubmit={onAddToCart} className="space-y-6">
+      <div className="mt-12 grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+        {/* ---- Live preview (first on mobile, sticky on desktop) ---- */}
+        <Reveal className="order-1 lg:sticky lg:top-28">
+          <div className="rounded-[28px] border border-brand-primary/12 bg-brand-surface p-5 shadow-craft sm:p-6">
+            <p className="flex items-center justify-between text-sm font-semibold text-brand-text">
+              Live preview
+              <span className="rounded-full bg-brand-cream px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold">
+                Updates as you type
+              </span>
+            </p>
+
+            {/* Wood plaque mock */}
+            <div className="texture-grain mt-4 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#caa06a] via-[#b07a35] to-[#8a5e29] p-3 shadow-craft-lg">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] bg-brand-cream ring-1 ring-black/10">
+                {photo ? (
+                  <Image
+                    src={photo.dataUrl}
+                    alt="Uploaded personalization preview"
+                    fill
+                    unoptimized
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-brand-muted">
+                    <ImagePlus className="size-9 text-brand-gold" aria-hidden />
+                    <p className="text-sm font-medium">
+                      Your photo will appear here once you upload it.
+                    </p>
+                  </div>
+                )}
+
+                {/* Engraving text overlay */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent px-4 pb-4 pt-10">
+                  <p
+                    className="text-center font-serif text-lg italic leading-snug text-white drop-shadow sm:text-xl"
+                    aria-live="polite"
+                  >
+                    {customText.trim() || "Your engraving text"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Price + actions */}
+            <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-brand-cream px-4 py-3">
+              <span className="text-sm font-medium text-brand-muted">
+                {selectedSize.label} · {selectedSize.dimensions}
+              </span>
+              <span className="text-xl font-bold tabular-nums text-brand-text">
+                {formatPeso(selectedSize.price)}
+              </span>
+            </div>
+
+            <form onSubmit={onAddToCart} className="mt-4 space-y-3">
+              {added ? (
+                <p className="flex animate-success-pop items-center gap-2 rounded-2xl border border-green-300 bg-green-50 px-4 py-3 text-sm font-medium text-green-900">
+                  <Check className="size-5 shrink-0 rounded-full bg-green-600 p-0.5 text-white" aria-hidden />
+                  Added to cart! Add another or review your order below.
+                </p>
+              ) : null}
+
+              <Button
+                type="submit"
+                disabled={!canAdd}
+                aria-describedby={!canAdd ? "add-to-cart-hint" : undefined}
+                className="cta-sheen min-h-12 w-full rounded-full bg-brand-primary text-brand-bg shadow-craft transition hover:bg-brand-secondary hover:shadow-craft-lg"
+              >
+                <ShoppingBag className="mr-2 size-4" aria-hidden />
+                Add to cart
+              </Button>
+
+              {items.length > 0 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-12 w-full rounded-full border-brand-gold/40 bg-brand-surface text-brand-text hover:bg-brand-cream hover:text-brand-gold"
+                  asChild
+                >
+                  <Link href="/checkout">Proceed to checkout</Link>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled
+                  className="min-h-12 w-full rounded-full border-brand-primary/20 bg-brand-surface text-brand-muted"
+                >
+                  Proceed to checkout
+                </Button>
+              )}
+
+              {!canAdd ? (
+                <p id="add-to-cart-hint" className="text-center text-sm text-brand-muted">
+                  {!photo && !customText.trim()
+                    ? "Upload a photo and add your text to enable “Add to cart”."
+                    : !photo
+                      ? "Upload a photo to enable “Add to cart”."
+                      : "Add your text/name to enable “Add to cart”."}
+                </p>
+              ) : null}
+            </form>
+
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-brand-muted">
+              <ShieldCheck className="size-3.5 text-brand-gold" aria-hidden />
+              We confirm every detail with you before engraving.
+            </p>
+
+            {/* Cart summary */}
+            {items.length > 0 ? (
+              <div className="mt-5 border-t border-brand-primary/10 pt-5">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm font-semibold text-brand-text">
+                    In your cart ({items.length})
+                  </p>
+                  <p className="text-sm font-bold tabular-nums text-brand-text">
+                    {formatPeso(total)}
+                  </p>
+                </div>
+                <ul className="mt-3 space-y-2.5">
+                  {items.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center gap-3 rounded-2xl bg-brand-cream p-2.5 transition hover:bg-brand-bg"
+                    >
+                      <Image
+                        src={item.photo.dataUrl}
+                        alt=""
+                        width={48}
+                        height={48}
+                        unoptimized
+                        className="h-12 w-12 rounded-xl object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-brand-text">
+                          {item.customText}
+                        </p>
+                        <p className="text-xs text-brand-muted">
+                          {item.sizeLabel} · {item.dimensions} · {formatPeso(item.price)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand-muted transition hover:bg-brand-surface hover:text-destructive"
+                        aria-label={`Remove ${item.customText}`}
+                      >
+                        <Trash2 className="size-4" aria-hidden />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </Reveal>
+
+        {/* ---- Builder steps ---- */}
+        <Reveal className="order-2">
+          <div className="space-y-6 rounded-[28px] border border-brand-primary/12 bg-brand-surface p-5 shadow-craft sm:p-7">
+            {/* Step 1: size */}
             <div>
-              <p className="text-sm font-semibold text-brand-text">Choose size</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <p className="flex items-center gap-3 text-sm font-semibold text-brand-text">
+                <StepBadge n={1} /> Choose your plaque size
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 {PRODUCT_SIZES.map((size) => {
                   const selected = size.id === sizeId;
                   return (
                     <button
                       key={size.id}
                       type="button"
+                      aria-pressed={selected}
                       onClick={() => {
                         setSizeId(size.id);
                         setAdded(false);
                       }}
-                      className={`min-h-28 rounded-[16px] border p-4 text-left transition ${
+                      className={`min-h-28 rounded-[18px] border p-4 text-left transition-all duration-200 ${
                         selected
-                          ? "border-brand-primary bg-brand-primary text-white shadow-md"
-                          : "border-brand-primary/20 bg-brand-bg text-brand-text hover:border-brand-primary/50"
+                          ? "border-brand-gold bg-brand-primary text-white shadow-craft-lg"
+                          : "border-brand-primary/15 bg-brand-cream text-brand-text hover:-translate-y-0.5 hover:border-brand-gold/50 hover:shadow-craft"
                       }`}
                     >
                       <span className="flex items-center justify-between gap-2 text-lg font-bold">
                         {size.label}
-                        {selected ? <Check className="size-4" aria-hidden /> : null}
+                        {selected ? (
+                          <Check className="size-4 text-brand-gold-soft" aria-hidden />
+                        ) : null}
                       </span>
-                      <span className={selected ? "mt-2 block text-sm text-white/80" : "mt-2 block text-sm text-brand-muted"}>
+                      <span
+                        className={`mt-2 block text-sm ${
+                          selected ? "text-white/80" : "text-brand-muted"
+                        }`}
+                      >
                         {size.dimensions}
                       </span>
-                      <span className="mt-3 block font-semibold">{formatPeso(size.price)}</span>
+                      <span
+                        className={`mt-3 block font-semibold tabular-nums ${
+                          selected ? "text-brand-gold-soft" : "text-brand-text"
+                        }`}
+                      >
+                        {formatPeso(size.price)}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            <div>
-              <label htmlFor="personalization-photo" className="block text-sm font-semibold text-brand-text">
-                Upload photo
+            {/* Step 2: photo */}
+            <div className="border-t border-brand-primary/10 pt-6">
+              <label
+                htmlFor="personalization-photo"
+                className="flex items-center gap-3 text-sm font-semibold text-brand-text"
+              >
+                <StepBadge n={2} /> Upload the photo to engrave
               </label>
               <label
                 htmlFor="personalization-photo"
-                className="mt-2 flex min-h-32 cursor-pointer items-center gap-4 rounded-[16px] border border-dashed border-brand-primary/30 bg-brand-bg p-4 transition hover:border-brand-primary/60"
+                className="mt-4 flex min-h-32 cursor-pointer items-center gap-4 rounded-[18px] border-2 border-dashed border-brand-gold/35 bg-brand-cream p-4 transition hover:border-brand-gold hover:bg-brand-bg"
               >
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-primary text-white">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-gold text-white shadow-craft">
                   <ImagePlus className="size-6" aria-hidden />
                 </span>
                 <span className="min-w-0 text-sm text-brand-muted">
                   <span className="block font-semibold text-brand-text">
-                    {photo ? photo.name : "Select a JPG, PNG, or WebP image"}
+                    {photo ? photo.name : "Tap to select a JPG, PNG, or WebP image"}
                   </span>
                   <span className="mt-1 block">Maximum file size: 5MB</span>
                 </span>
@@ -232,26 +466,18 @@ export function ProductPersonalization() {
                 className="sr-only"
               />
               <p className="mt-2 text-sm text-brand-muted">
-                Tip: a clear, high-contrast, well-lit photo with visible faces
-                engraves the sharpest.
+                Tip: a clear, high-contrast, well-lit photo with visible faces engraves the
+                sharpest.
               </p>
-              {photo ? (
-                <div className="mt-3 overflow-hidden rounded-[16px] border border-brand-primary/15">
-                  <Image
-                    src={photo.dataUrl}
-                    alt="Uploaded personalization preview"
-                    width={720}
-                    height={320}
-                    unoptimized
-                    className="h-48 w-full object-cover"
-                  />
-                </div>
-              ) : null}
             </div>
 
-            <div>
-              <label htmlFor="custom-text" className="block text-sm font-semibold text-brand-text">
-                Enter custom text/name
+            {/* Step 3: text */}
+            <div className="border-t border-brand-primary/10 pt-6">
+              <label
+                htmlFor="custom-text"
+                className="flex items-center gap-3 text-sm font-semibold text-brand-text"
+              >
+                <StepBadge n={3} /> Add your text or name
               </label>
               <input
                 id="custom-text"
@@ -262,150 +488,64 @@ export function ProductPersonalization() {
                 }}
                 maxLength={120}
                 placeholder="Example: Maria, Batch 2026, Love always"
-                className="mt-2 w-full min-h-12 rounded-[16px] border border-brand-primary/25 bg-brand-bg px-4 text-brand-text placeholder:text-brand-muted/80 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/25"
+                className="mt-4 min-h-12 w-full rounded-[16px] border border-brand-primary/20 bg-brand-cream px-4 text-brand-text placeholder:text-brand-muted/70 focus:border-brand-gold focus:outline-none focus:ring-2 focus:ring-brand-gold/25"
               />
+              <p className="mt-2 text-right text-xs text-brand-muted tabular-nums">
+                {customText.length}/120
+              </p>
             </div>
 
             {error ? (
-              <p role="alert" className="rounded-[16px] border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
+              <p
+                role="alert"
+                className="flex items-start gap-2 rounded-[16px] border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900"
+              >
                 {error}
               </p>
             ) : null}
-
-            {added ? (
-              <p className="rounded-[16px] border border-green-300 bg-green-50 px-4 py-3 text-sm font-medium text-green-900">
-                Item added. You can add another personalized plaque or proceed to checkout.
-              </p>
-            ) : null}
-
-            <div className="flex items-center justify-between gap-3 border-t border-brand-primary/10 pt-4">
-              <span className="text-sm font-medium text-brand-muted">
-                Your plaque ({selectedSize.label} · {selectedSize.dimensions})
-              </span>
-              <span className="text-xl font-bold text-brand-text">
-                {formatPeso(selectedSize.price)}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button
-                type="submit"
-                disabled={!canAdd}
-                aria-describedby={!canAdd ? "add-to-cart-hint" : undefined}
-                className="min-h-12 flex-1 rounded-full bg-brand-primary text-white hover:bg-brand-secondary"
-              >
-                <ShoppingBag className="mr-2 size-4" aria-hidden />
-                Add to cart
-              </Button>
-              {items.length > 0 ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="min-h-12 flex-1 rounded-full border-brand-primary/25 bg-brand-surface text-brand-text hover:bg-brand-bg"
-                  asChild
-                >
-                  <Link href="/checkout">Proceed to checkout</Link>
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled
-                  className="min-h-12 flex-1 rounded-full border-brand-primary/25 bg-brand-surface text-brand-text hover:bg-brand-bg"
-                >
-                  Proceed to checkout
-                </Button>
-              )}
-            </div>
-
-            {!canAdd ? (
-              <p id="add-to-cart-hint" className="text-sm text-brand-muted">
-                {!photo && !customText.trim()
-                  ? "Upload a photo and add the text/name to enable “Add to cart”."
-                  : !photo
-                    ? "Upload a photo to enable “Add to cart”."
-                    : "Add the text/name to enable “Add to cart”."}
-              </p>
-            ) : null}
-          </form>
-
-          {items.length > 0 ? (
-            <div className="mt-6 border-t border-brand-primary/10 pt-5">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm font-semibold text-brand-text">
-                  Cart summary ({items.length})
-                </p>
-                <p className="text-sm font-bold text-brand-text">{formatPeso(total)}</p>
-              </div>
-              <ul className="mt-3 space-y-3">
-                {items.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex items-center gap-3 rounded-[16px] bg-brand-bg p-3"
-                  >
-                    <Image
-                      src={item.photo.dataUrl}
-                      alt=""
-                      width={56}
-                      height={56}
-                      unoptimized
-                      className="h-14 w-14 rounded-[12px] object-cover"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-brand-text">
-                        {item.customText}
-                      </p>
-                      <p className="text-xs text-brand-muted">
-                        {item.sizeLabel} - {item.dimensions} - {formatPeso(item.price)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(item.id)}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand-muted transition hover:bg-brand-surface hover:text-brand-text"
-                      aria-label={`Remove ${item.customText}`}
-                    >
-                      <Trash2 className="size-4" aria-hidden />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
+          </div>
+        </Reveal>
       </div>
 
-      <div className="mt-12">
-        <p className="text-center text-sm font-semibold text-brand-text">
-          Sample work
+      {/* ---- Sample work ---- */}
+      <Reveal className="mt-16">
+        <p className="text-center text-xs font-semibold uppercase tracking-[0.25em] text-brand-gold">
+          Recent work
+        </p>
+        <p className="mt-2 text-center font-serif text-2xl font-semibold text-brand-text">
+          A few keepsakes we&apos;ve made lately
         </p>
         <div
-          className="mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-5 sm:gap-4 sm:overflow-visible sm:pb-0"
+          className="mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-5 sm:gap-4 sm:overflow-visible sm:pb-0"
           role="list"
           aria-label="Examples of engraved plaques"
         >
-          {WORK_SAMPLE_IMAGES.map((sample) => (
-            <figure
+          {WORK_SAMPLE_IMAGES.map((sample, i) => (
+            <Reveal
+              as="div"
+              index={i}
               key={sample.src}
               role="listitem"
-              className="w-[42vw] max-w-[200px] shrink-0 snap-center sm:w-auto sm:max-w-none"
+              className="group w-[42vw] max-w-[200px] shrink-0 snap-center sm:w-auto sm:max-w-none"
             >
-              <div className="relative aspect-[3/4] overflow-hidden rounded-[16px] border border-brand-primary/15 bg-brand-bg shadow-sm">
-                <Image
-                  src={sample.src}
-                  alt={sample.alt}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 42vw, (max-width: 1024px) 20vw, 18vw"
-                />
-              </div>
-              <figcaption className="mt-2 text-center text-xs font-medium text-brand-muted">
-                {sample.caption}
-              </figcaption>
-            </figure>
+              <figure>
+                <div className="relative aspect-[3/4] overflow-hidden rounded-[18px] border border-brand-primary/12 bg-brand-bg shadow-craft transition-shadow duration-300 group-hover:shadow-craft-lg">
+                  <Image
+                    src={sample.src}
+                    alt={sample.alt}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 640px) 42vw, (max-width: 1024px) 20vw, 18vw"
+                  />
+                </div>
+                <figcaption className="mt-2 text-center text-xs font-medium text-brand-muted">
+                  {sample.caption}
+                </figcaption>
+              </figure>
+            </Reveal>
           ))}
         </div>
-      </div>
+      </Reveal>
     </Section>
   );
 }

@@ -39,6 +39,10 @@ interface Feature {
 
 interface EthicalHeroBase {
   /**
+   * Small eyebrow badge shown above the title.
+   */
+  eyebrow?: React.ReactNode;
+  /**
    * The main title. Can be a string or ReactNode for complex formatting (e.g., line breaks, bolding).
    */
   title: React.ReactNode;
@@ -46,6 +50,10 @@ interface EthicalHeroBase {
    * The subtitle text displayed below the main title.
    */
   subtitle: string;
+  /**
+   * Optional trust signals rendered below the CTA.
+   */
+  trust?: React.ReactNode;
   /**
    * Optional feature cards below the hero. Omit to hide the grid.
    */
@@ -67,7 +75,7 @@ export type EthicalHeroProps = EthicalHeroBase & {
 };
 
 export function EthicalHero(props: EthicalHeroProps) {
-  const { title, subtitle, features = [], hangingItems, className, cta } = props;
+  const { eyebrow, title, subtitle, trust, features = [], hangingItems, className, cta } = props;
   const hangingActive = Boolean(hangingItems?.length);
   const ctaNode =
     cta !== undefined ? (
@@ -90,23 +98,35 @@ export function EthicalHero(props: EthicalHeroProps) {
       )}
     >
       <div className="mx-auto max-w-3xl text-center">
+        {eyebrow ? (
+          <motion.div variants={FADE_UP_VARIANTS} className="mb-6 flex justify-center">
+            {eyebrow}
+          </motion.div>
+        ) : null}
+
         <motion.h1
           variants={FADE_UP_VARIANTS}
-          className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl"
+          className="font-serif text-4xl font-semibold leading-[1.08] tracking-tight text-foreground sm:text-6xl"
         >
           {title}
         </motion.h1>
 
         <motion.p
           variants={FADE_UP_VARIANTS}
-          className="mt-6 text-lg leading-8 text-muted-foreground"
+          className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-brand-muted"
         >
           {subtitle}
         </motion.p>
 
         {ctaNode ? (
-          <motion.div variants={FADE_UP_VARIANTS} className="mt-10">
+          <motion.div variants={FADE_UP_VARIANTS} className="mt-9">
             {ctaNode}
+          </motion.div>
+        ) : null}
+
+        {trust ? (
+          <motion.div variants={FADE_UP_VARIANTS} className="mt-8">
+            {trust}
           </motion.div>
         ) : null}
       </div>

@@ -1,144 +1,94 @@
 import Image from "next/image";
+import { Heart, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
+
+import { Reveal } from "@/components/ui/reveal";
 import { Section } from "@/components/ui/section";
 
-const items = [
+const reasons = [
   {
-    title: "Personalized Engraved Gifts That Last a Lifetime",
-    body: "Names, dates, quotes, or inside jokes—etched with care so the moment stays with them.",
-    variant: "dark" as const,
-    image: "/products/plaque-appreciation.png",
-    imageAlt:
-      "Custom wooden appreciation plaque with engraved text and photo on a wooden stand",
+    icon: Sparkles,
+    title: "Genuinely handcrafted",
+    body: "Every line is laser-cut with intention — never machine-stamped and forgotten. The wood grain, the finish, the detail: all chosen to feel premium in hand.",
   },
   {
-    title: "Clear, friendly updates from start to finish",
-    body: "We confirm your details before production so there are no “oops” moments.",
-    variant: "light" as const,
-    image: "/products/plaque-family.png",
-    imageAlt: "Family portrait laser-engraved on a light wood plaque with decorative details",
+    icon: MessageCircle,
+    title: "Friendly, human updates",
+    body: "We confirm your photo and wording before anything is engraved, so there are no “oops” moments — just a piece that comes out exactly right.",
   },
   {
-    title: "Perfect for real life (and real budgets)",
-    body: "Students, young pros, and couples—gift something that feels premium without the stiff vibe.",
-    variant: "dark" as const,
-    image: "/products/plaque-portrait.png",
-    imageAlt: "Personalized wooden plaque with a detailed engraved portrait on a mini easel",
+    icon: ShieldCheck,
+    title: "Made-right guarantee",
+    body: "If a finished piece arrives damaged or doesn't match what we approved together, message us a photo and we'll repair or remake it.",
+  },
+  {
+    icon: Heart,
+    title: "Built for real budgets",
+    body: "Students, young pros, and couples — gift something that feels meaningful and premium without the stiff price tag.",
   },
 ];
 
-const STRIP_IMAGE = "/products/plaque-custom.png";
-const STRIP_IMAGE_ALT =
-  "Custom laser-engraved wooden plaque with portrait and name on display";
-
 export function Benefits() {
   return (
-    <Section id="benefits" aria-labelledby="benefits-heading" className="py-14">
-      <div className="mx-auto max-w-3xl text-center">
-        <h2
-          id="benefits-heading"
-          className="font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl"
-        >
-          Why people choose JAVA CRAFTS
-        </h2>
-        <p className="mt-3 text-lg text-brand-muted">
-          Outcomes that feel thoughtful—not rushed, not generic.
-        </p>
-      </div>
-
-      <ul className="mt-12 grid gap-6 sm:grid-cols-3">
-        {items.map((item) => (
-          <li
-            key={item.title}
-            className={`relative flex min-h-[280px] flex-col overflow-hidden rounded-[30px] shadow-sm ${
-              item.variant === "dark"
-                ? "bg-brand-primary text-white"
-                : "border border-brand-primary/15 bg-brand-surface text-brand-text"
-            }`}
-          >
-            <div className="relative h-40 shrink-0 sm:h-44">
+    <Section id="why" aria-labelledby="benefits-heading" className="py-16 sm:py-20">
+      <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <Reveal>
+          <div className="relative">
+            <div className="texture-grain relative aspect-[4/5] overflow-hidden rounded-[32px] shadow-craft-lg">
               <Image
-                src={item.image}
-                alt={item.imageAlt}
+                src="/products/plaque-custom.png"
+                alt="Custom laser-engraved wooden plaque with portrait and name on display"
                 fill
                 className="object-cover"
-                sizes="(max-width: 640px) 100vw, 33vw"
+                sizes="(max-width: 1024px) 100vw, 45vw"
               />
-              <div
-                className={`absolute inset-0 ${
-                  item.variant === "dark" ? "bg-brand-primary/35" : "bg-black/15"
-                }`}
-                aria-hidden
-              />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-primary/45 via-transparent to-transparent" aria-hidden />
             </div>
-            <div className="flex flex-1 flex-col p-6">
-              <h3
-                className={`text-lg font-semibold leading-snug ${
-                  item.variant === "dark" ? "text-white" : "font-serif text-brand-text"
-                }`}
-              >
-                {item.title}
-              </h3>
-              <p
-                className={`mt-2 text-sm leading-relaxed ${
-                  item.variant === "dark" ? "text-white/85" : "text-brand-muted"
-                }`}
-              >
-                {item.body}
+            <div className="absolute -bottom-5 left-5 right-5 rounded-2xl border border-brand-gold/25 bg-brand-surface/95 px-5 py-4 shadow-craft backdrop-blur sm:left-8 sm:right-auto sm:max-w-xs">
+              <p className="font-serif text-lg font-semibold text-brand-text">
+                “It looked like the photo — but better in person.”
               </p>
+              <p className="mt-1 text-sm text-brand-muted">— A real JAVA CRAFTS customer</p>
             </div>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-12 grid gap-8 lg:grid-cols-2 lg:items-center">
-        <div className="relative min-h-[240px] overflow-hidden rounded-[30px] shadow-sm lg:min-h-[320px]">
-          <Image
-            src={STRIP_IMAGE}
-            alt={STRIP_IMAGE_ALT}
-            fill
-            className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-tr from-black/50 to-transparent" aria-hidden />
-        </div>
-        <div className="space-y-6 px-1">
-          <div>
-            <h3 className="font-serif text-2xl font-semibold text-brand-text">
-              Artisan detail
-            </h3>
-            <p className="mt-2 text-brand-muted">
-              Every line is cut with intention—whether it&apos;s a name, a date, or a tiny symbol
-              that only you two understand.
-            </p>
           </div>
-          <div>
-            <h3 className="font-serif text-2xl font-semibold text-brand-text">
-              Best quality
-            </h3>
-            <p className="mt-2 text-brand-muted">
-              We choose materials and finishes that feel good in hand and age gracefully, so your
-              gift keeps telling the story.
-            </p>
-          </div>
-        </div>
-      </div>
+        </Reveal>
 
-      <div className="mt-12 grid gap-6 rounded-[30px] border border-dashed border-brand-primary/25 bg-brand-surface p-6 sm:grid-cols-2 sm:p-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-muted">
-            Before
-          </p>
-          <p className="mt-2 text-lg text-brand-text">
-            Generic gifts that feel last-minute and forgettable.
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-primary">
-            After
-          </p>
-          <p className="mt-2 text-lg font-medium text-brand-text">
-            Personalized Engraved Gifts That Last a Lifetime—unique to your story.
-          </p>
+          <Reveal className="max-w-xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-gold">
+              Why choose us
+            </p>
+            <h2
+              id="benefits-heading"
+              className="mt-4 font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl"
+            >
+              Gifts that feel thoughtful — not rushed, not generic
+            </h2>
+            <p className="mt-4 text-lg leading-relaxed text-brand-muted">
+              We treat your moment like it&apos;s our own, from the first message to the
+              finished keepsake.
+            </p>
+          </Reveal>
+
+          <ul className="mt-8 grid gap-5 sm:grid-cols-2">
+            {reasons.map((reason, i) => (
+              <Reveal as="li" key={reason.title} index={i}>
+                <div className="flex h-full flex-col rounded-[22px] border border-brand-primary/12 bg-brand-surface p-5 shadow-craft transition-all duration-300 hover:-translate-y-1 hover:border-brand-gold/30 hover:shadow-craft-lg">
+                  <span
+                    className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-cream text-brand-gold ring-1 ring-brand-gold/20"
+                    aria-hidden
+                  >
+                    <reason.icon className="size-5" strokeWidth={1.75} />
+                  </span>
+                  <h3 className="mt-4 font-serif text-lg font-semibold text-brand-text">
+                    {reason.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-brand-muted">
+                    {reason.body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </ul>
         </div>
       </div>
     </Section>

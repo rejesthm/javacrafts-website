@@ -61,7 +61,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    try {
+      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // Storage quota exceeded (e.g. very large photos) — keep the in-memory
+      // cart working instead of crashing; it just won't survive a refresh.
+      console.warn(
+        "[cart] Could not persist cart to localStorage (storage full).",
+      );
+    }
   }, [items, ready]);
 
   const addItem = useCallback((item: CartItem) => {

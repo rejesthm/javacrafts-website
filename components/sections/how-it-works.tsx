@@ -3,10 +3,10 @@ import { HowItWorks as HowItWorksBlock } from "@/components/ui/how-it-works";
 export function HowItWorks() {
   return (
     <HowItWorksBlock
-      id="about"
+      id="how-it-works"
       aria-labelledby="steps-heading"
       headingId="steps-heading"
-      className="py-14 sm:py-20"
+      className="py-16 sm:py-20"
     />
   );
 }

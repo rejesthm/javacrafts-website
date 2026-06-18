@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
+
 import {
   BRAND_NAME,
   LOCATION,
@@ -8,7 +10,7 @@ import {
 } from "@/lib/site";
 
 const nav = [
-  { label: "Home", href: "/" },
+  { label: "How it works", href: "/#how-it-works" },
   { label: "Personalize", href: "/#personalize" },
   { label: "Reviews", href: "/#gallery" },
   { label: "FAQ", href: "/#faq" },
@@ -27,55 +29,97 @@ export function SiteFooter() {
   const socials = SOCIALS.filter((s) => s.href);
   const contact = getPrimaryContact();
   return (
-    <footer className="border-t border-brand-primary/10 bg-brand-bg">
-      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="relative mt-4 overflow-hidden bg-brand-primary text-brand-bg">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-gold/60 to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-gold/10 blur-3xl"
+        aria-hidden
+      />
+
+      <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.9fr_0.9fr_1fr]">
+          {/* Brand */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-muted">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 font-serif text-2xl font-semibold tracking-tight text-brand-bg"
+            >
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-gold/20 text-brand-gold-soft ring-1 ring-brand-gold/30"
+                aria-hidden
+              >
+                <Sparkles className="size-4" />
+              </span>
+              {BRAND_NAME}
+            </Link>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-brand-bg/70">
+              Personalized engraved gifts for meaningful moments — handcrafted with care in{" "}
+              {LOCATION}.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold-soft">
               Explore
             </p>
-            <ul className="mt-4 space-y-3 text-sm text-brand-text">
+            <ul className="mt-4 space-y-3 text-sm text-brand-bg/85">
               {nav.map((item) => (
                 <li key={item.href}>
-                  <Link href={item.href} className="transition hover:text-brand-accent">
+                  <Link href={item.href} className="transition hover:text-brand-gold-soft">
                     {item.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
+
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-muted">
-              {BRAND_NAME}
-            </p>
-            <p className="mt-4 text-sm leading-relaxed text-brand-text">
-              Personalized engraved gifts for meaningful moments—crafted with care in{" "}
-              {LOCATION}.
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-muted">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold-soft">
               Help
             </p>
-            <ul className="mt-4 space-y-3 text-sm text-brand-text">
+            <ul className="mt-4 space-y-3 text-sm text-brand-bg/85">
               <li>
-                <Link href="/#personalize" className="transition hover:text-brand-accent">
-                  Personalize
+                <Link href="/#personalize" className="transition hover:text-brand-gold-soft">
+                  Start an order
                 </Link>
               </li>
               <li>
-                <Link href="/#faq" className="transition hover:text-brand-accent">
+                <Link href="/#faq" className="transition hover:text-brand-gold-soft">
                   FAQ
+                </Link>
+              </li>
+              <li>
+                <Link href="/checkout" className="transition hover:text-brand-gold-soft">
+                  Your cart
                 </Link>
               </li>
             </ul>
           </div>
+
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-muted">
-              Follow
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold-soft">
+              Let&apos;s talk
             </p>
+            {contact ? (
+              <a
+                href={contact.href}
+                className="cta-sheen mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-brand-gold px-6 text-xs font-semibold uppercase tracking-wider text-white shadow-craft transition hover:bg-brand-gold-soft hover:text-brand-primary"
+              >
+                {contact.label}
+              </a>
+            ) : (
+              <Link
+                href="/#personalize"
+                className="cta-sheen mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-brand-gold px-6 text-xs font-semibold uppercase tracking-wider text-white shadow-craft transition hover:bg-brand-gold-soft hover:text-brand-primary"
+              >
+                Get in touch
+              </Link>
+            )}
             {socials.length > 0 ? (
-              <div className="mt-4 flex gap-3">
+              <div className="mt-5 flex gap-3">
                 {socials.map((social) => (
                   <a
                     key={social.icon}
@@ -83,7 +127,7 @@ export function SiteFooter() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={social.label}
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white transition hover:bg-brand-secondary"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-bg/10 text-brand-bg ring-1 ring-brand-bg/15 transition hover:bg-brand-gold hover:text-white"
                   >
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                       <path d={SOCIAL_ICON_PATHS[social.icon]} />
@@ -92,24 +136,10 @@ export function SiteFooter() {
                 ))}
               </div>
             ) : null}
-            {contact ? (
-              <a
-                href={contact.href}
-                className="mt-6 inline-flex min-h-10 items-center justify-center rounded-full bg-brand-primary px-5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-brand-secondary"
-              >
-                {contact.label}
-              </a>
-            ) : (
-              <Link
-                href="/#personalize"
-                className="mt-6 inline-flex min-h-10 items-center justify-center rounded-full bg-brand-primary px-5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-brand-secondary"
-              >
-                Get in touch
-              </Link>
-            )}
           </div>
         </div>
-        <p className="mt-12 border-t border-brand-primary/10 pt-8 text-center text-sm text-brand-muted">
+
+        <p className="mt-12 border-t border-brand-bg/10 pt-8 text-center text-sm text-brand-bg/60">
           © {new Date().getFullYear()} {BRAND_NAME}. Handmade with care in {LOCATION}.
         </p>
       </div>

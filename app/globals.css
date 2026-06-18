@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  /* Espresso & cream + shadcn semantic tokens */
-  --background: #f2ebe1;
+  /* Warm espresso + cream + caramel gold — handcrafted palette */
+  --background: #f5ecdf;
   --foreground: #2b1e16;
-  --card: #ffffff;
+  --card: #fffdf9;
   --card-foreground: #2b1e16;
-  --popover: #ffffff;
+  --popover: #fffdf9;
   --popover-foreground: #2b1e16;
   --primary: #2b1e16;
-  --primary-foreground: #f2ebe1;
-  --secondary: #e8dfd4;
+  --primary-foreground: #f5ecdf;
+  --secondary: #e9ddcb;
   --secondary-foreground: #2b1e16;
-  --muted: #e8dfd4;
-  --muted-foreground: #5c4033;
-  --accent: #e8dfd4;
-  --accent-foreground: #2b1e16;
+  --muted: #e9ddcb;
+  --muted-foreground: #6b5443;
+  --accent: #b07a35;
+  --accent-foreground: #ffffff;
   --destructive: #b91c1c;
   --destructive-foreground: #fafafa;
-  --border: #d4c9bc;
-  --input: #d4c9bc;
-  --ring: #2b1e16;
+  --border: #d8cab5;
+  --input: #d8cab5;
+  --ring: #b07a35;
   --radius: 0.5rem;
 }
 
@@ -45,13 +45,19 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --radius-lg: var(--radius);
-  --color-brand-primary: #2b1e16;
-  --color-brand-secondary: #1a130e;
-  --color-brand-accent: #5c4033;
-  --color-brand-bg: #f2ebe1;
-  --color-brand-surface: #ffffff;
+
+  /* Brand tokens */
+  --color-brand-primary: #2b1e16;   /* espresso */
+  --color-brand-secondary: #1a130e; /* dark roast (hover) */
+  --color-brand-accent: #6b5443;    /* warm cocoa text accent */
+  --color-brand-gold: #b07a35;      /* caramel gold */
+  --color-brand-gold-soft: #d6a861; /* soft gold highlight */
+  --color-brand-bg: #f5ecdf;        /* cream */
+  --color-brand-cream: #faf4ea;     /* lighter cream surface */
+  --color-brand-surface: #fffdf9;   /* card surface */
   --color-brand-text: #2b1e16;
-  --color-brand-muted: #5c4033;
+  --color-brand-muted: #6b5443;     /* readable warm gray-brown (4.5:1+ on cream) */
+
   --font-sans: var(--font-montserrat);
   --font-serif: var(--font-playfair);
 }
@@ -60,14 +66,147 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+  /* Subtle layered paper/wood warmth — lightweight, GPU-free, no images */
+  background-image:
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(255, 251, 244, 0.9), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(214, 168, 97, 0.08), transparent 55%),
+    radial-gradient(ellipse 70% 60% at 0% 100%, rgba(176, 122, 53, 0.06), transparent 55%);
+  background-attachment: fixed;
 }
 
 /* Visible focus for keyboard users */
 :focus-visible {
-  outline: 2px solid var(--color-brand-primary);
+  outline: 2px solid var(--color-brand-gold);
   outline-offset: 2px;
 }
 
+/* ---- Soft, layered "craft" elevation ---- */
+.shadow-craft {
+  box-shadow:
+    0 1px 2px rgba(43, 30, 22, 0.04),
+    0 8px 24px -12px rgba(43, 30, 22, 0.18);
+}
+.shadow-craft-lg {
+  box-shadow:
+    0 2px 4px rgba(43, 30, 22, 0.05),
+    0 24px 48px -18px rgba(43, 30, 22, 0.28);
+}
+
+/* ---- Faint engraved-paper grain for feature panels ---- */
+.texture-grain {
+  position: relative;
+}
+.texture-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.5;
+  background-image: radial-gradient(rgba(43, 30, 22, 0.05) 1px, transparent 1.4px);
+  background-size: 14px 14px;
+}
+
+/* ---- FAQ accordion marker (native <details> fallback) ---- */
 details[open] .faq-marker {
   transform: rotate(45deg);
+}
+
+/* ---- Add-to-cart success pop ---- */
+@keyframes successPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  55% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-success-pop {
+  animation: successPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ---- Gentle shimmer for "handcrafted to order" emphasis ---- */
+@keyframes goldSweep {
+  0% { background-position: -120% 0; }
+  100% { background-position: 220% 0; }
+}
+
+/* ---- Sweeping sheen on primary CTAs (hover) ---- */
+.cta-sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.cta-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.22) 48%,
+    transparent 66%
+  );
+  background-size: 220% 100%;
+  background-position: -130% 0;
+  pointer-events: none;
+}
+.cta-sheen:hover::after {
+  animation: goldSweep 0.9s ease;
+}
+
+/* ---- Engraved ornament divider (reusable section flourish) ---- */
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--color-brand-gold);
+}
+.ornament::before,
+.ornament::after {
+  content: "";
+  height: 1px;
+  width: clamp(2rem, 8vw, 4.5rem);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-brand-gold) 55%, transparent)
+  );
+}
+.ornament::after {
+  background: linear-gradient(
+    270deg,
+    transparent,
+    color-mix(in srgb, var(--color-brand-gold) 55%, transparent)
+  );
+}
+
+/* ---- Animated top accent for premium cards ---- */
+.card-accent-top {
+  position: relative;
+}
+.card-accent-top::before {
+  content: "";
+  position: absolute;
+  inset-inline: 1.25rem;
+  top: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--color-brand-gold), transparent);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-accent-top:hover::before {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
