@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     q: "What payment methods do you accept?",
-    a: "We accept GCash and bank transfer. We'll share the exact payment details when we confirm your order.",
+    a: "Checkout uses a secure PayMongo QR Ph code for the item total. Delivery fees are confirmed separately based on your location.",
   },
   {
     q: "How do I get my plaque, and how much is delivery?",

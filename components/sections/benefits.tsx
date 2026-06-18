@@ -7,8 +7,8 @@ import { Section } from "@/components/ui/section";
 const reasons = [
   {
     icon: Sparkles,
-    title: "Genuinely handcrafted",
-    body: "Every line is laser-cut with intention — never machine-stamped and forgotten. The wood grain, the finish, the detail: all chosen to feel premium in hand.",
+    title: "Personalized engraving",
+    body: "Every line is laser-cut with intention and finished with care. The wood grain, the finish, the detail: all chosen to feel premium in hand.",
   },
   {
     icon: MessageCircle,

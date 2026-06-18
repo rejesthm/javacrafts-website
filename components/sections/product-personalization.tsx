@@ -1,15 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Check, ImagePlus, ShieldCheck, ShoppingBag, Trash2 } from "lucide-react";
 
 import { useCart } from "@/components/cart-provider";
+import { LeadCaptureDialog } from "@/components/lead-capture-dialog";
 import { Button } from "@/components/ui/button";
 import { Ornament } from "@/components/ui/ornament";
 import { Reveal } from "@/components/ui/reveal";
 import { Section } from "@/components/ui/section";
+import { GHL_PAGE_SLUG_HOME, OFFER } from "@/lib/site";
 import {
   ACCEPTED_PHOTO_TYPES,
   MAX_PHOTO_BYTES,
@@ -18,6 +20,7 @@ import {
   formatPeso,
   type CartPhoto,
   type ProductSizeId,
+  type SavedCheckoutLead,
 } from "@/lib/order";
 
 const WORK_SAMPLE_IMAGES: { src: string; alt: string; caption: string }[] = [
@@ -129,7 +132,7 @@ function createId() {
 function StepBadge({ n }: { n: number }) {
   return (
     <span
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold text-sm font-bold text-white shadow-craft"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-gold text-sm font-bold text-white shadow-craft ring-4 ring-brand-gold/15"
       aria-hidden
     >
       {n}
@@ -139,12 +142,21 @@ function StepBadge({ n }: { n: number }) {
 
 export function ProductPersonalization() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const { addItem, items, removeItem, total } = useCart();
+  const router = useRouter();
+  const {
+    addItem,
+    items,
+    removeItem,
+    total,
+    loadSavedCheckoutLead,
+    saveCheckoutLead,
+  } = useCart();
   const [sizeId, setSizeId] = useState<ProductSizeId>("s");
   const [customText, setCustomText] = useState("");
   const [photo, setPhoto] = useState<CartPhoto | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  const [leadOpen, setLeadOpen] = useState(false);
 
   const selectedSize = PRODUCT_SIZES.find((size) => size.id === sizeId)!;
   const canAdd = Boolean(customText.trim() && photo);
@@ -208,6 +220,45 @@ export function ProductPersonalization() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  // Gate checkout behind a quick name/email capture — unless we already have a
+  // valid lead saved, in which case we go straight through.
+  function onProceedToCheckout() {
+    if (loadSavedCheckoutLead()) {
+      router.push("/checkout");
+      return;
+    }
+    setLeadOpen(true);
+  }
+
+  async function handleLeadSubmit(lead: SavedCheckoutLead) {
+    // Save locally first so we keep the contact for follow-up even if the
+    // network/CRM is unavailable; the send below is best-effort.
+    saveCheckoutLead(lead);
+    try {
+      await fetch("/api/checkout-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: lead.name,
+          email: lead.email,
+          pageSlug: GHL_PAGE_SLUG_HOME,
+          offer: OFFER,
+          cart: {
+            itemCount: items.length,
+            total,
+            items: items.map((item) => ({
+              productName: item.productName,
+              size: item.sizeLabel,
+            })),
+          },
+        }),
+      });
+    } catch {
+      // Best-effort: the lead is already saved locally for follow-up.
+    }
+    router.push("/checkout");
+  }
+
   return (
     <Section id="personalize" aria-labelledby="personalize-heading" className="py-16 sm:py-20">
       <Reveal className="mx-auto max-w-2xl text-center">
@@ -222,69 +273,56 @@ export function ProductPersonalization() {
           Personalize your keepsake
         </h2>
         <p className="mt-4 text-lg leading-relaxed text-brand-muted">
-          Pick a size, upload your photo, and add the words — watch it come together in the
-          live preview as you go.
+          Pick a size, upload your photo, and add your words.
         </p>
       </Reveal>
 
-      <div className="mt-12 grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-        {/* ---- Live preview (first on mobile, sticky on desktop) ---- */}
-        <Reveal className="order-1 lg:sticky lg:top-28">
-          <div className="rounded-[28px] border border-brand-primary/12 bg-brand-surface p-5 shadow-craft sm:p-6">
-            <p className="flex items-center justify-between text-sm font-semibold text-brand-text">
-              Live preview
-              <span className="rounded-full bg-brand-cream px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-gold">
-                Updates as you type
-              </span>
-            </p>
+      <div className="mt-12 grid gap-8 lg:grid-cols-[1.05fr_0.85fr] lg:items-start">
+        {/* ---- Compact verify + actions (sticky rail on desktop) ---- */}
+        <Reveal className="order-2 lg:sticky lg:top-28">
+          <div className="rounded-[28px] border border-brand-gold/15 bg-brand-surface p-5 shadow-craft ring-1 ring-brand-gold/5 sm:p-6">
+            <p className="text-sm font-semibold text-brand-text">Your design</p>
 
-            {/* Wood plaque mock */}
-            <div className="texture-grain mt-4 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#caa06a] via-[#b07a35] to-[#8a5e29] p-3 shadow-craft-lg">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] bg-brand-cream ring-1 ring-black/10">
-                {photo ? (
-                  <Image
-                    src={photo.dataUrl}
-                    alt="Uploaded personalization preview"
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-brand-muted">
-                    <ImagePlus className="size-9 text-brand-gold" aria-hidden />
-                    <p className="text-sm font-medium">
-                      Your photo will appear here once you upload it.
-                    </p>
-                  </div>
-                )}
-
-                {/* Engraving text overlay */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent px-4 pb-4 pt-10">
-                  <p
-                    className="text-center font-serif text-lg italic leading-snug text-white drop-shadow sm:text-xl"
-                    aria-live="polite"
-                  >
-                    {customText.trim() || "Your engraving text"}
-                  </p>
+            {/* Small verification preview */}
+            <div className="mt-3 flex items-center gap-4 rounded-2xl border border-brand-gold/15 bg-brand-cream p-3">
+              <div className="wood-grain-frame shrink-0 rounded-2xl p-1.5 shadow-craft">
+                <div className="relative h-20 w-20 overflow-hidden rounded-xl bg-brand-surface ring-1 ring-black/10">
+                  {photo ? (
+                    <Image
+                      src={photo.dataUrl}
+                      alt="Your uploaded photo"
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-brand-gold/70">
+                      <ImagePlus className="size-6" aria-hidden />
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-
-            {/* Price + actions */}
-            <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-brand-cream px-4 py-3">
-              <span className="text-sm font-medium text-brand-muted">
-                {selectedSize.label} · {selectedSize.dimensions}
-              </span>
-              <span className="text-xl font-bold tabular-nums text-brand-text">
-                {formatPeso(selectedSize.price)}
-              </span>
+              <div className="min-w-0 flex-1">
+                <p
+                  className="truncate font-serif text-base italic text-brand-text"
+                  aria-live="polite"
+                >
+                  {customText.trim() || "Your engraving text"}
+                </p>
+                <p className="mt-1 text-xs text-brand-muted">
+                  {selectedSize.label} · {selectedSize.dimensions}
+                </p>
+                <p className="mt-1.5 text-lg font-bold tabular-nums text-brand-gold">
+                  {formatPeso(selectedSize.price)}
+                </p>
+              </div>
             </div>
 
             <form onSubmit={onAddToCart} className="mt-4 space-y-3">
               {added ? (
                 <p className="flex animate-success-pop items-center gap-2 rounded-2xl border border-green-300 bg-green-50 px-4 py-3 text-sm font-medium text-green-900">
                   <Check className="size-5 shrink-0 rounded-full bg-green-600 p-0.5 text-white" aria-hidden />
-                  Added to cart! Add another or review your order below.
+                  Added to cart!
                 </p>
               ) : null}
 
@@ -302,10 +340,10 @@ export function ProductPersonalization() {
                 <Button
                   type="button"
                   variant="outline"
+                  onClick={onProceedToCheckout}
                   className="min-h-12 w-full rounded-full border-brand-gold/40 bg-brand-surface text-brand-text hover:bg-brand-cream hover:text-brand-gold"
-                  asChild
                 >
-                  <Link href="/checkout">Proceed to checkout</Link>
+                  Proceed to checkout
                 </Button>
               ) : (
                 <Button
@@ -331,7 +369,7 @@ export function ProductPersonalization() {
 
             <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-brand-muted">
               <ShieldCheck className="size-3.5 text-brand-gold" aria-hidden />
-              We confirm every detail with you before engraving.
+              We confirm details before engraving.
             </p>
 
             {/* Cart summary */}
@@ -383,13 +421,13 @@ export function ProductPersonalization() {
           </div>
         </Reveal>
 
-        {/* ---- Builder steps ---- */}
-        <Reveal className="order-2">
-          <div className="space-y-6 rounded-[28px] border border-brand-primary/12 bg-brand-surface p-5 shadow-craft sm:p-7">
+        {/* ---- Builder steps (primary) ---- */}
+        <Reveal className="order-1">
+          <div className="space-y-6 rounded-[28px] border border-brand-gold/15 bg-brand-surface p-5 shadow-craft ring-1 ring-brand-gold/5 sm:p-7">
             {/* Step 1: size */}
             <div>
               <p className="flex items-center gap-3 text-sm font-semibold text-brand-text">
-                <StepBadge n={1} /> Choose your plaque size
+                <StepBadge n={1} /> Choose a size
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 {PRODUCT_SIZES.map((size) => {
@@ -441,7 +479,7 @@ export function ProductPersonalization() {
                 htmlFor="personalization-photo"
                 className="flex items-center gap-3 text-sm font-semibold text-brand-text"
               >
-                <StepBadge n={2} /> Upload the photo to engrave
+                <StepBadge n={2} /> Upload your photo
               </label>
               <label
                 htmlFor="personalization-photo"
@@ -466,8 +504,7 @@ export function ProductPersonalization() {
                 className="sr-only"
               />
               <p className="mt-2 text-sm text-brand-muted">
-                Tip: a clear, high-contrast, well-lit photo with visible faces engraves the
-                sharpest.
+                Tip: a clear, well-lit photo engraves sharpest.
               </p>
             </div>
 
@@ -477,7 +514,7 @@ export function ProductPersonalization() {
                 htmlFor="custom-text"
                 className="flex items-center gap-3 text-sm font-semibold text-brand-text"
               >
-                <StepBadge n={3} /> Add your text or name
+                <StepBadge n={3} /> Add your text
               </label>
               <input
                 id="custom-text"
@@ -546,6 +583,13 @@ export function ProductPersonalization() {
           ))}
         </div>
       </Reveal>
+
+      {leadOpen ? (
+        <LeadCaptureDialog
+          onClose={() => setLeadOpen(false)}
+          onSubmit={handleLeadSubmit}
+        />
+      ) : null}
     </Section>
   );
 }

@@ -10,10 +10,12 @@ import {
   type ReactNode,
 } from "react";
 
-import type { CartItem, SavedLeadInfo } from "@/lib/order";
+import type { CartItem, SavedCheckoutLead, SavedLeadInfo } from "@/lib/order";
+import { isValidEmail } from "@/lib/order";
 
 const CART_STORAGE_KEY = "java-crafts-cart";
 const LEAD_STORAGE_KEY = "java-crafts-lead-info";
+const CHECKOUT_LEAD_STORAGE_KEY = "java-crafts-checkout-lead";
 
 type CartContextValue = {
   items: CartItem[];
@@ -26,6 +28,8 @@ type CartContextValue = {
   loadSavedLeadInfo: () => SavedLeadInfo | null;
   saveLeadInfo: (info: SavedLeadInfo) => void;
   clearSavedLeadInfo: () => void;
+  loadSavedCheckoutLead: () => SavedCheckoutLead | null;
+  saveCheckoutLead: (lead: SavedCheckoutLead) => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -107,6 +111,45 @@ export function CartProvider({ children }: { children: ReactNode }) {
     window.localStorage.removeItem(LEAD_STORAGE_KEY);
   }, []);
 
+  // Returns a saved name/email only when both are present and the email looks
+  // valid. Prefers the dedicated checkout-lead key, but falls back to a fully
+  // saved address so returning customers also skip the gate.
+  const loadSavedCheckoutLead = useCallback((): SavedCheckoutLead | null => {
+    if (typeof window === "undefined") return null;
+    const fromRaw = (raw: string | null): SavedCheckoutLead | null => {
+      if (!raw) return null;
+      try {
+        const parsed = JSON.parse(raw) as Partial<SavedCheckoutLead>;
+        const name = (parsed.name ?? "").trim();
+        const email = (parsed.email ?? "").trim();
+        if (name && isValidEmail(email)) return { name, email };
+      } catch {
+        // ignore malformed entries
+      }
+      return null;
+    };
+    try {
+      return (
+        fromRaw(window.localStorage.getItem(CHECKOUT_LEAD_STORAGE_KEY)) ??
+        fromRaw(window.localStorage.getItem(LEAD_STORAGE_KEY))
+      );
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const saveCheckoutLead = useCallback((lead: SavedCheckoutLead) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        CHECKOUT_LEAD_STORAGE_KEY,
+        JSON.stringify({ name: lead.name.trim(), email: lead.email.trim() }),
+      );
+    } catch {
+      console.warn("[cart] Could not persist checkout lead to localStorage.");
+    }
+  }, []);
+
   const value = useMemo<CartContextValue>(
     () => ({
       items,
@@ -119,15 +162,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       loadSavedLeadInfo,
       saveLeadInfo,
       clearSavedLeadInfo,
+      loadSavedCheckoutLead,
+      saveCheckoutLead,
     }),
     [
       addItem,
       clearCart,
       clearSavedLeadInfo,
       items,
+      loadSavedCheckoutLead,
       loadSavedLeadInfo,
       ready,
       removeItem,
+      saveCheckoutLead,
       saveLeadInfo,
     ],
   );

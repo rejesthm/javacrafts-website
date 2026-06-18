@@ -6,12 +6,23 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
+  Building2,
+  Globe,
+  Hash,
   Heart,
+  Home,
+  Mail,
+  Map,
+  MapPin,
   LockKeyhole,
   MessageCircle,
   PackageCheck,
+  Phone,
   ShieldCheck,
   Trash2,
+  Truck,
+  User,
+  type LucideIcon,
 } from "lucide-react";
 
 import { useCart } from "@/components/cart-provider";
@@ -37,18 +48,21 @@ type LeadField = keyof SavedLeadInfo;
 type FieldConfig = {
   id: LeadField;
   label: string;
+  icon: LucideIcon;
   type?: string;
   autoComplete?: string;
   required?: boolean;
   inputMode?: React.InputHTMLAttributes<HTMLInputElement>["inputMode"];
   placeholder?: string;
+  helper?: string;
 };
 
 const fields: FieldConfig[] = [
-  { id: "name", label: "Name", autoComplete: "name", required: true, placeholder: "Maria Santos" },
+  { id: "name", label: "Full name", icon: User, autoComplete: "name", required: true, placeholder: "Maria Santos" },
   {
     id: "email",
     label: "Email",
+    icon: Mail,
     type: "email",
     autoComplete: "email",
     inputMode: "email",
@@ -58,25 +72,29 @@ const fields: FieldConfig[] = [
   {
     id: "phone",
     label: "Phone number",
+    icon: Phone,
     type: "tel",
     autoComplete: "tel",
     inputMode: "tel",
     required: true,
     placeholder: "0917 123 4567",
+    helper: "Philippine mobile — e.g. 0917 123 4567",
   },
-  { id: "messenger", label: "Messenger (optional)", autoComplete: "url", placeholder: "facebook.com/yourprofile" },
-  { id: "houseStreet", label: "House, street", autoComplete: "address-line1", required: true, placeholder: "123 Rizal St." },
-  { id: "barangay", label: "Barangay", autoComplete: "address-line2", required: true },
+  { id: "messenger", label: "Messenger (optional)", icon: MessageCircle, autoComplete: "url", placeholder: "facebook.com/yourprofile" },
+  { id: "houseStreet", label: "House, street", icon: Home, autoComplete: "address-line1", required: true, placeholder: "123 Rizal St." },
+  { id: "barangay", label: "Barangay", icon: MapPin, autoComplete: "address-line2", required: true, placeholder: "Maniki" },
   {
     id: "postalCode",
     label: "Postal code",
+    icon: Hash,
     autoComplete: "postal-code",
     inputMode: "numeric",
     required: true,
     placeholder: "8000",
+    helper: "4 digits",
   },
-  { id: "city", label: "City / Municipality", autoComplete: "address-level2", required: true, placeholder: "Kapalong" },
-  { id: "region", label: "Region / Province", autoComplete: "address-level1", required: true, placeholder: "Davao del Norte" },
+  { id: "city", label: "City / Municipality", icon: Building2, autoComplete: "address-level2", required: true, placeholder: "Kapalong" },
+  { id: "region", label: "Region / Province", icon: Map, autoComplete: "address-level1", required: true, placeholder: "Davao del Norte" },
 ];
 
 /** PH mobile, ignoring spaces/dashes. */
@@ -99,7 +117,7 @@ function validate(info: SavedLeadInfo): Partial<Record<LeadField, string>> {
 
 const TRUST_BADGES = [
   { icon: ShieldCheck, label: "We confirm every detail before we engrave" },
-  { icon: PackageCheck, label: "No payment now — we'll confirm the total with you" },
+  { icon: PackageCheck, label: "Pay securely by PayMongo QR Ph" },
   { icon: Heart, label: "Made-right guarantee on every keepsake" },
 ];
 
@@ -110,8 +128,8 @@ export function CheckoutClient() {
     total,
     ready,
     removeItem,
-    clearCart,
     loadSavedLeadInfo,
+    loadSavedCheckoutLead,
     saveLeadInfo,
     clearSavedLeadInfo,
   } = useCart();
@@ -126,15 +144,28 @@ export function CheckoutClient() {
   useEffect(() => {
     let cancelled = false;
     queueMicrotask(() => {
+      if (cancelled) return;
       const saved = loadSavedLeadInfo();
-      if (!saved || cancelled) return;
-      setLeadInfo({ ...emptyLeadInfo, ...saved });
-      setSaveForNextTime(true);
+      if (saved) {
+        setLeadInfo({ ...emptyLeadInfo, ...saved });
+        setSaveForNextTime(true);
+        return;
+      }
+      // No full address saved — still prefill name/email from the pre-checkout
+      // lead gate so the visitor doesn't retype them.
+      const checkoutLead = loadSavedCheckoutLead();
+      if (checkoutLead) {
+        setLeadInfo((current) => ({
+          ...current,
+          name: current.name || checkoutLead.name,
+          email: current.email || checkoutLead.email,
+        }));
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [loadSavedLeadInfo]);
+  }, [loadSavedLeadInfo, loadSavedCheckoutLead]);
 
   function updateField(field: LeadField, value: string) {
     setLeadInfo((current) => ({ ...current, [field]: value }));
@@ -182,13 +213,20 @@ export function CheckoutClient() {
       formData.append("cart", JSON.stringify(items));
       formData.append("total", String(total));
 
-      const res = await fetch("/api/ghl-lead", {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         body: formData,
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        orderId?: string;
+      };
       if (!res.ok) {
         setError(data.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+      if (!data.orderId) {
+        setError("We couldn't prepare your payment QR. Please try again.");
         return;
       }
 
@@ -197,8 +235,7 @@ export function CheckoutClient() {
       } else {
         clearSavedLeadInfo();
       }
-      clearCart();
-      router.push("/thank-you");
+      router.push(`/checkout/pay/${data.orderId}`);
     } catch {
       setError("Network error. Check your connection and try again.");
     } finally {
@@ -234,33 +271,47 @@ export function CheckoutClient() {
   function renderField(field: FieldConfig) {
     const message = fieldErrors[field.id];
     const errorId = `${field.id}-error`;
+    const helperId = `${field.id}-helper`;
+    const Icon = field.icon;
     return (
       <div key={field.id}>
         <label htmlFor={field.id} className="block text-sm font-semibold text-brand-text">
           {field.label}
           {field.required ? <span className="ml-0.5 text-destructive" aria-hidden>*</span> : null}
         </label>
-        <input
-          id={field.id}
-          name={field.id}
-          type={field.type ?? "text"}
-          inputMode={field.inputMode}
-          autoComplete={field.autoComplete}
-          placeholder={field.placeholder}
-          required={field.required}
-          aria-invalid={message ? true : undefined}
-          aria-describedby={message ? errorId : undefined}
-          value={leadInfo[field.id]}
-          onChange={(e) => updateField(field.id, e.target.value)}
-          className={`mt-2 w-full min-h-12 rounded-[16px] border bg-brand-cream px-4 font-normal text-brand-text placeholder:text-brand-muted/70 focus:outline-none focus:ring-2 ${
-            message
-              ? "border-red-400 focus:border-red-500 focus:ring-red-200"
-              : "border-brand-primary/20 focus:border-brand-gold focus:ring-brand-gold/25"
-          }`}
-        />
+        <div className="group relative mt-2">
+          <Icon
+            className={`pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 transition-colors ${
+              message ? "text-red-400" : "text-brand-gold/70 group-focus-within:text-brand-gold"
+            }`}
+            aria-hidden
+          />
+          <input
+            id={field.id}
+            name={field.id}
+            type={field.type ?? "text"}
+            inputMode={field.inputMode}
+            autoComplete={field.autoComplete}
+            placeholder={field.placeholder}
+            required={field.required}
+            aria-invalid={message ? true : undefined}
+            aria-describedby={message ? errorId : field.helper ? helperId : undefined}
+            value={leadInfo[field.id]}
+            onChange={(e) => updateField(field.id, e.target.value)}
+            className={`min-h-[3.25rem] w-full rounded-2xl border bg-brand-cream pl-12 pr-4 text-base text-brand-text placeholder:text-brand-muted/70 focus:outline-none focus:ring-2 ${
+              message
+                ? "border-red-400 focus:border-red-500 focus:ring-red-200"
+                : "border-brand-primary/15 focus:border-brand-gold focus:ring-brand-gold/25"
+            }`}
+          />
+        </div>
         {message ? (
-          <p id={errorId} role="alert" className="mt-1.5 text-sm text-red-700">
+          <p id={errorId} role="alert" className="mt-1.5 text-sm font-medium text-red-700">
             {message}
+          </p>
+        ) : field.helper ? (
+          <p id={helperId} className="mt-1.5 text-xs text-brand-muted">
+            {field.helper}
           </p>
         ) : null}
       </div>
@@ -284,7 +335,7 @@ export function CheckoutClient() {
             </h1>
             <p className="mt-2 max-w-xl text-brand-muted">
               Add your contact and delivery details and we&apos;ll confirm the design,
-              delivery, and payment with you personally.
+              then generate your secure QR payment.
             </p>
           </div>
           <p className="rounded-full border border-brand-gold/25 bg-brand-surface px-4 py-2 text-sm font-semibold text-brand-text shadow-craft">
@@ -309,46 +360,57 @@ export function CheckoutClient() {
           ref={formRef}
           onSubmit={onSubmit}
           noValidate
-          className="rounded-[28px] border border-brand-primary/12 bg-brand-surface p-5 shadow-craft sm:p-7"
+          className="order-2 rounded-[28px] border border-brand-gold/15 bg-brand-surface p-5 shadow-craft ring-1 ring-brand-gold/5 sm:p-7 lg:order-1"
         >
           <fieldset className="border-0 p-0">
-            <legend className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold">
-              Contact details
+            <legend className="mb-4 flex items-center gap-3 text-base font-semibold text-brand-text">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-cream text-brand-gold ring-1 ring-brand-gold/20" aria-hidden>
+                <User className="size-5" strokeWidth={1.75} />
+              </span>
+              Your contact details
             </legend>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
               {fields.slice(0, 4).map(renderField)}
             </div>
           </fieldset>
 
-          <fieldset className="mt-7 border-0 p-0">
-            <legend className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold">
-              Delivery address
+          <fieldset className="mt-8 border-0 p-0">
+            <legend className="mb-4 flex items-center gap-3 text-base font-semibold text-brand-text">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-cream text-brand-gold ring-1 ring-brand-gold/20" aria-hidden>
+                <Truck className="size-5" strokeWidth={1.75} />
+              </span>
+              Where we&apos;ll deliver
             </legend>
-            <div className="mt-4">
-              <label htmlFor="country" className="block text-sm font-semibold text-brand-text">
-                Country
-              </label>
-              <input
-                id="country"
-                value="Philippines"
-                disabled
-                className="mt-2 w-full min-h-12 rounded-[16px] border border-brand-primary/15 bg-brand-primary/5 px-4 font-normal text-brand-muted"
-              />
+            <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
+              {fields.slice(4).map(renderField)}
+              <div className="sm:col-span-2">
+                <label htmlFor="country" className="block text-sm font-semibold text-brand-text">
+                  Country
+                </label>
+                <div className="relative mt-2">
+                  <Globe className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-brand-gold/60" aria-hidden />
+                  <input
+                    id="country"
+                    value="Philippines"
+                    disabled
+                    className="min-h-[3.25rem] w-full rounded-2xl border border-brand-primary/12 bg-brand-primary/5 pl-12 pr-4 text-base text-brand-muted"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">{fields.slice(4).map(renderField)}</div>
           </fieldset>
 
-          <label className="mt-6 flex items-start gap-3 rounded-[16px] bg-brand-cream p-4 text-sm text-brand-text">
+          <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-2xl border border-brand-gold/15 bg-brand-cream p-4 text-sm text-brand-text transition hover:border-brand-gold/35">
             <input
               type="checkbox"
               checked={saveForNextTime}
               onChange={(e) => setSaveForNextTime(e.target.checked)}
-              className="mt-1 h-4 w-4 accent-brand-gold"
+              className="mt-0.5 h-5 w-5 shrink-0 accent-brand-gold"
             />
             <span>
-              <span className="font-semibold">Save this information for next time</span>
-              <span className="block text-brand-muted">
-                Saves your contact and address details in this browser only.
+              <span className="font-semibold">Save my details for next time</span>
+              <span className="mt-0.5 block text-brand-muted">
+                Stored only in this browser to make your next order faster.
               </span>
             </span>
           </label>
@@ -380,12 +442,12 @@ export function CheckoutClient() {
             {pending ? "Sending your request..." : "Submit order request"}
           </Button>
           <p className="mt-3 text-center text-xs text-brand-muted">
-            Submitting sends us your request — it doesn&apos;t charge you. We&apos;ll reply to
-            confirm everything first.
+            Submitting saves your order and creates a single-use PayMongo QR for
+            the item total.
           </p>
         </form>
 
-        <aside className="rounded-[28px] border border-brand-primary/12 bg-brand-surface p-5 shadow-craft sm:p-7 lg:sticky lg:top-28">
+        <aside className="order-1 rounded-[28px] border border-brand-gold/15 bg-brand-surface p-5 shadow-craft ring-1 ring-brand-gold/5 sm:p-7 lg:order-2 lg:sticky lg:top-28">
           <h2 className="font-serif text-2xl font-semibold text-brand-text">Your order</h2>
           <ul className="mt-5 space-y-4">
             {items.map((item) => (
@@ -437,8 +499,8 @@ export function CheckoutClient() {
               <span className="text-xl font-bold tabular-nums">{formatPeso(total)}</span>
             </div>
             <p className="mt-2 text-sm text-brand-muted">
-              We&apos;ll confirm delivery and payment (GCash or bank transfer) with you
-              personally after you submit — delivery is quoted based on your location.
+              Pay the item total by QR after submitting. Delivery is still quoted
+              separately based on your location.
             </p>
           </div>
         </aside>

@@ -9,7 +9,7 @@ import { BRAND_NAME, getPrimaryContact } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Thank you — ${BRAND_NAME}`,
-  description: "We received your order request and will follow up shortly.",
+  description: "We received your order and payment confirmation.",
 };
 
 const steps = [
@@ -20,8 +20,8 @@ const steps = [
   },
   {
     icon: CreditCard,
-    title: "We settle delivery & payment",
-    body: "Together we'll confirm delivery (or pickup) and your total, then we'll share GCash or bank transfer details.",
+    title: "Payment is received",
+    body: "Your QR payment is confirmed. We'll only settle delivery or pickup details with you from here.",
   },
   {
     icon: PackageCheck,
@@ -43,14 +43,15 @@ export default function ThankYouPage() {
               <CheckCircle2 className="size-10" aria-hidden />
             </div>
             <p className="mt-6 text-xs font-semibold uppercase tracking-[0.25em] text-brand-gold">
-              Order request received
+              Order payment received
             </p>
             <h1 className="mt-3 font-serif text-4xl font-semibold tracking-tight text-brand-text">
               You&apos;re all set — thank you!
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-brand-muted">
               We&apos;ve received your request and we&apos;re excited to make something
-              meaningful for you. Here&apos;s exactly what happens next.
+              meaningful for you. Your item payment is confirmed, and here&apos;s what
+              happens next.
             </p>
           </div>
 

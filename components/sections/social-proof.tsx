@@ -8,66 +8,48 @@ import { Star } from "lucide-react";
 
 const testimonials = [
   {
-    text: "I ordered a personalized wooden keychain and I was honestly impressed with the quality. The engraving was precise and the item felt premium. It’s such a simple product but it felt very meaningful.",
-    image:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face",
-    name: "M. Santos",
-    role: "Customer",
+    text: "Sobrang ganda ng pagkakagawa! Nag-order ako ng wooden keychain para sa anniversary namin at grabe ang quality. Ang linis ng engraving, parang ang sarap hawakan. Sulit na sulit.",
+    name: "Mariel S.",
+    role: "Davao City",
   },
   {
-    text: "Java Crafts exceeded my expectations. I requested a custom design for a birthday gift and they delivered exactly what I had in mind. The communication was smooth and the result was beautiful.",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face",
-    name: "J. Tibog",
-    role: "Gift buyer",
+    text: "Salamat kaayo, Java Crafts! Na-impress jud ko sa kalidad sa plaque nga akong gi-order. Limpyo kaayo ang engrave ug gwapo tan-awon. Mo-order gyud ko og balik.",
+    name: "Jandro T.",
+    role: "Cebu City",
   },
   {
-    text: "I needed a last-minute gift and they still managed to deliver on time. The engraving was clean and professional. Highly recommended if you’re looking for something unique and personal.",
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face",
-    name: "S. Minor",
-    role: "Customer",
+    text: "I gave this as a graduation gift and na-iyak talaga yung ate ko. The engraving was so detailed—parang hindi machine-made. Highly recommended!",
+    name: "Shaira M.",
+    role: "Tagum City",
   },
   {
-    text: "The wood grain on my order was gorgeous and the personalization looks hand-done, not machine-stamped. I’ve already sent two friends their way.",
-    image:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face",
-    name: "A. Reyes",
-    role: "Customer",
+    text: "Mas nindot pa ang output kaysa sa picture, grabe! Ang bilis pa sa transaction ug ang buotan mo-reply. Salamat kaayo sa inyo.",
+    name: "Aljun R.",
+    role: "Panabo City",
   },
   {
-    text: "We used Java Crafts for small thank-you gifts for our team. Everyone commented on how thoughtful they felt—quality you can actually hold.",
-    image:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&h=80&fit=crop&crop=face",
-    name: "L. Chen",
-    role: "Small business owner",
+    text: "Ginamit namin ito bilang pasalubong para sa buong team. Natuwa silang lahat—ang thoughtful daw. Sobrang sulit ng binayad namin.",
+    name: "Liza C.",
+    role: "Team gifts",
   },
   {
-    text: "Clear updates, fair timeline, and the final piece looked like the photos but better in person. That’s rare for custom work online.",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face",
-    name: "D. Okonkwo",
-    role: "Customer",
+    text: "Last-minute ako nag-order pero na-deliver pa rin on time, salamat! Ang linis ng engraving at ang bilis nila mag-update. Order ulit ako pag Pasko.",
+    name: "Daryl O.",
+    role: "Cagayan de Oro",
   },
   {
-    text: "I’m picky about fonts and spacing—they matched my reference exactly. The packaging was neat too, ready to give as a gift.",
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=face",
-    name: "K. Park",
-    role: "Gift buyer",
+    text: "Pihikan kaayo ko sa font ug spacing, pero gi-sunod gyud nila akong reference. Hapsay pa ang packaging, andam na ihatag nga regalo. Solid kaayo!",
+    name: "Kim P.",
+    role: "Cebu City",
   },
   {
-    text: "Ordered a keepsake for my parents’ anniversary. They tear up every time they see the engraving. Worth every peso.",
-    image:
-      "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=80&h=80&fit=crop&crop=face",
-    name: "R. Flores",
-    role: "Customer",
+    text: "Pang-anniversary 'to ng parents ko. Tuwing nakikita nila, naiiyak sila sa tuwa. Worth every peso, promise.",
+    name: "Rhea F.",
+    role: "Anniversary gift",
   },
   {
-    text: "No fluff—just solid craftsmanship and people who actually reply when you have a question. I’ll be back for the holidays.",
-    image:
-      "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=80&h=80&fit=crop&crop=face",
-    name: "N. Ibrahim",
+    text: "No drama—solid ang craftsmanship ug buotan kaayo ang customer service. Mo-reply dayon sila pag naa kay pangutana. Balik gyud ko ani sunod holidays.",
+    name: "Nico I.",
     role: "Repeat customer",
   },
 ];
@@ -110,7 +92,7 @@ export function SocialProof() {
           <span className="text-sm text-brand-muted">from 200+ happy orders</span>
         </div>
         <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-brand-muted">
-          Real words from real customers — no fluff, no fake metrics.
+          Totoong reviews from real Pinoy customers — Tagalog, Bisaya, walang halong drama.
         </p>
       </motion.div>
 

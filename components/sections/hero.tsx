@@ -5,7 +5,6 @@ import { ArrowRight, Hammer, Star, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EthicalHero, type HangingProductItem } from "@/components/ui/hero-5";
 import { Ornament } from "@/components/ui/ornament";
-import { LOCATION } from "@/lib/site";
 
 const HERO_SHOWCASE: HangingProductItem[] = [
   {
@@ -47,27 +46,37 @@ const HERO_SHOWCASE: HangingProductItem[] = [
 
 const TRUST = [
   { icon: Star, label: "Loved by 200+ gift-givers" },
-  { icon: Hammer, label: "Handcrafted to order" },
+  { icon: Hammer, label: "Personalized engraving to order" },
   { icon: Truck, label: "Nationwide delivery + local pickup" },
 ];
 
 export function Hero() {
   return (
-    <div className="relative w-full overflow-x-clip bg-[radial-gradient(ellipse_120%_80%_at_50%_-15%,#fdf8f0_0%,#f7efe3_45%,#f5ecdf_78%,#eee2d2_100%)]">
-      {/* Warm atmospheric accents */}
+    <div className="hero-canvas relative isolate w-full overflow-x-clip">
+      {/* Warm glow + amber spotlight accents */}
       <div
-        className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-brand-gold/10 blur-3xl"
+        className="pointer-events-none absolute -left-24 top-24 -z-10 h-72 w-72 rounded-full bg-brand-gold/15 blur-3xl"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -right-20 top-10 h-64 w-64 rounded-full bg-brand-gold-soft/10 blur-3xl"
+        className="pointer-events-none absolute -right-16 top-8 -z-10 h-72 w-72 rounded-full bg-brand-gold-soft/20 blur-3xl"
+        aria-hidden
+      />
+      {/* Fine film grain for tactile engraved depth */}
+      <div
+        className="hero-grain pointer-events-none absolute inset-0 -z-10 opacity-[0.05] mix-blend-soft-light"
+        aria-hidden
+      />
+      {/* Smooth fade into the page background */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-28 bg-gradient-to-b from-transparent to-brand-bg"
         aria-hidden
       />
       <EthicalHero
         eyebrow={
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-gold/30 bg-brand-cream/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-gold shadow-craft backdrop-blur-sm">
             <span className="size-1.5 animate-pulse rounded-full bg-brand-gold" aria-hidden />
-            Handcrafted in {LOCATION.split(",")[0]}
+            Personalized engraved, just for you
           </span>
         }
         title={
@@ -76,7 +85,7 @@ export function Hero() {
             <span className="text-brand-gold">they&apos;ll treasure forever</span>.
           </span>
         }
-        subtitle={`Custom laser-engraved wood plaques, portraits, and keepsakes for birthdays, anniversaries, graduations, and remembrance — each one made by hand, just for your moment.`}
+        subtitle={`Custom laser-engraved wood plaques, portraits, and keepsakes for birthdays, anniversaries, graduations, and remembrance — each one personalized for your moment.`}
         cta={
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
@@ -95,7 +104,7 @@ export function Hero() {
               asChild
               className="min-h-12 rounded-full border-brand-primary/20 bg-brand-surface px-8 text-brand-text shadow-craft transition hover:border-brand-gold/50 hover:text-brand-gold"
             >
-              <a href="#how-it-works">See how it works</a>
+              <a href="#gallery">Read reviews</a>
             </Button>
           </div>
         }

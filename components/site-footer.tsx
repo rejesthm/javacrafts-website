@@ -10,7 +10,7 @@ import {
 } from "@/lib/site";
 
 const nav = [
-  { label: "How it works", href: "/#how-it-works" },
+  { label: "Gift ideas", href: "/#occasions" },
   { label: "Personalize", href: "/#personalize" },
   { label: "Reviews", href: "/#gallery" },
   { label: "FAQ", href: "/#faq" },
@@ -56,8 +56,7 @@ export function SiteFooter() {
               {BRAND_NAME}
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-brand-bg/70">
-              Personalized engraved gifts for meaningful moments — handcrafted with care in{" "}
-              {LOCATION}.
+              Personalized engraved gifts for meaningful moments, made to order in {LOCATION}.
             </p>
           </div>
 
@@ -140,7 +139,8 @@ export function SiteFooter() {
         </div>
 
         <p className="mt-12 border-t border-brand-bg/10 pt-8 text-center text-sm text-brand-bg/60">
-          © {new Date().getFullYear()} {BRAND_NAME}. Handmade with care in {LOCATION}.
+          © {new Date().getFullYear()} {BRAND_NAME}. Personalized engraving with care in{" "}
+          {LOCATION}.
         </p>
       </div>
     </footer>

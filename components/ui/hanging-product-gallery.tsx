@@ -42,23 +42,54 @@ const MOBILE_LAYOUT: LayoutConfig[] = [
 ];
 
 function RopeSvg({ className }: { className?: string }) {
+  const d = "M 8 26 Q 600 78 1192 26";
   return (
     <svg
       className={cn(
-        "pointer-events-none absolute left-1/2 top-0 z-10 w-[min(110%,calc(100%+2rem))] -translate-x-1/2 text-foreground/45",
+        "pointer-events-none absolute left-1/2 top-0 z-10 w-[min(110%,calc(100%+2rem))] -translate-x-1/2",
         className,
       )}
       viewBox="0 0 1200 72"
       fill="none"
       aria-hidden
     >
+      {/* twine: soft shadow, warm core, braided highlight */}
+      <path d={d} stroke="rgba(43,30,22,0.18)" strokeWidth="3.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      <path d={d} stroke="#a67c45" strokeWidth="2.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
       <path
-        d="M 8 26 Q 600 78 1192 26"
-        stroke="currentColor"
-        strokeWidth="2.25"
+        d={d}
+        stroke="#e2c89c"
+        strokeWidth="2.5"
         strokeLinecap="round"
+        strokeDasharray="1.5 5"
+        opacity="0.7"
         vectorEffect="non-scaling-stroke"
       />
+    </svg>
+  );
+}
+
+/** Small wooden clothespin that clips the polaroid to the twine. */
+function Clip() {
+  return (
+    <svg
+      width="13"
+      height="17"
+      viewBox="0 0 13 17"
+      fill="none"
+      className="z-20 -mb-0.5 shrink-0 drop-shadow-[0_2px_3px_rgba(43,30,22,0.3)]"
+      aria-hidden
+    >
+      <rect x="2.1" y="1.5" width="3.6" height="14" rx="1.7" fill="#c79553" />
+      <rect x="2.1" y="1.5" width="3.6" height="14" rx="1.7" fill="url(#peg-shade)" />
+      <rect x="7.3" y="1.5" width="3.6" height="14" rx="1.7" fill="#9c6f33" />
+      <circle cx="6.5" cy="6" r="1.7" fill="none" stroke="#8c8c8c" strokeWidth="1" />
+      <defs>
+        <linearGradient id="peg-shade" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
+      </defs>
     </svg>
   );
 }
@@ -81,31 +112,32 @@ function HangingCard({
   const inner = (
     <>
       <div
-        className="w-px shrink-0 bg-gradient-to-b from-foreground/50 to-foreground/25"
+        className="w-px shrink-0 bg-gradient-to-b from-[#a67c45] to-[#a67c45]/40"
         style={{ height: `${stringH}px` }}
         aria-hidden
       />
-      <div
-        className="z-20 h-3 w-2.5 shrink-0 rounded-[2px] bg-primary shadow-sm ring-1 ring-primary/20"
-        aria-hidden
-      />
+      <Clip />
       <div
         className={cn(
-          "relative z-10 w-full cursor-default rounded-lg bg-card p-2 pb-2.5 shadow-[0_18px_40px_-12px_rgba(43,30,22,0.35),0_4px_12px_-4px_rgba(43,30,22,0.18)] ring-1 ring-border/60 transition-shadow duration-300 sm:rounded-xl sm:p-2.5 sm:pb-3",
+          "group relative z-10 w-full cursor-default rounded-lg bg-[#fffdf9] p-2 pb-2.5 shadow-[0_18px_40px_-12px_rgba(43,30,22,0.35),0_4px_12px_-4px_rgba(43,30,22,0.18)] ring-1 ring-brand-gold/15 transition-shadow duration-300 sm:rounded-xl sm:p-2.5 sm:pb-3",
           item.href &&
-            "cursor-pointer hover:shadow-[0_22px_48px_-12px_rgba(43,30,22,0.42),0_6px_16px_-4px_rgba(43,30,22,0.22)]",
+            "cursor-pointer hover:shadow-[0_24px_52px_-12px_rgba(43,30,22,0.45),0_6px_16px_-4px_rgba(176,122,53,0.28)]",
         )}
       >
-        <div className="relative aspect-square overflow-hidden rounded-md bg-muted/30 ring-1 ring-border/40">
+        <div className="relative aspect-square overflow-hidden rounded-md bg-muted/30 ring-1 ring-brand-primary/10">
           <Image
             src={item.imageUrl}
             alt={item.alt}
             fill
             sizes="(max-width: 640px) 22vw, 148px"
-            className="object-cover"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+          />
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-primary/15 via-transparent to-white/10"
+            aria-hidden
           />
         </div>
-        <p className="mt-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.08em] text-foreground sm:text-xs">
+        <p className="mt-1.5 flex items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.1em] text-brand-text transition-colors duration-300 group-hover:text-brand-gold sm:text-xs">
           {item.title}
         </p>
       </div>

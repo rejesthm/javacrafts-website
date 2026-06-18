@@ -1,0 +1,11 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": [
+    {
+      "bucket": "javacrafts-6d675.firebasestorage.app",
+      "rules": "storage.rules"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ import { HeaderCountdown } from "@/components/header-countdown";
 import { BRAND_NAME } from "@/lib/site";
 
 const nav = [
-  { label: "How it works", href: "/#how-it-works" },
+  { label: "Gift ideas", href: "/#occasions" },
   { label: "Personalize", href: "/#personalize" },
   { label: "Reviews", href: "/#gallery" },
   { label: "FAQ", href: "/#faq" },
@@ -38,7 +38,7 @@ export function SiteHeader() {
             <span className="leading-none">
               {BRAND_NAME}
               <span className="mt-0.5 hidden text-[10px] font-sans font-medium uppercase tracking-[0.22em] text-brand-muted sm:block">
-                Handcrafted engraving
+                Personalized engraved gifts
               </span>
             </span>
           </Link>

@@ -1,15 +1,22 @@
 "use client";
 
-import Image from "next/image";
 import React from "react";
 import { motion } from "motion/react";
 
 export type Testimonial = {
   text: string;
-  image: string;
   name: string;
   role: string;
 };
+
+function getInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 export function TestimonialsColumn(props: {
   className?: string;
@@ -32,22 +39,21 @@ export function TestimonialsColumn(props: {
       >
         {new Array(2).fill(0).map((_, index) => (
           <React.Fragment key={index}>
-            {props.testimonials.map(({ text, image, name, role }, i) => (
+            {props.testimonials.map(({ text, name, role }, i) => (
               <div
-                className="p-10 rounded-3xl border border-brand-primary/20 shadow-lg shadow-primary/10 max-w-xs w-full bg-brand-surface"
+                className="p-8 rounded-3xl border border-brand-gold/15 shadow-craft max-w-xs w-full bg-brand-surface"
                 key={`${index}-${i}`}
               >
-                <div className="text-brand-text">{text}</div>
-                <div className="flex items-center gap-2 mt-5">
-                  <Image
-                    width={40}
-                    height={40}
-                    src={image}
-                    alt={name}
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
+                <p className="leading-relaxed text-brand-text">{text}</p>
+                <div className="flex items-center gap-3 mt-5">
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-gold to-[#8a5e29] text-sm font-bold text-white shadow-craft"
+                    aria-hidden
+                  >
+                    {getInitials(name)}
+                  </div>
                   <div className="flex flex-col">
-                    <div className="font-medium tracking-tight leading-5 text-brand-text">
+                    <div className="font-semibold tracking-tight leading-5 text-brand-text">
                       {name}
                     </div>
                     <div className="leading-5 tracking-tight text-brand-muted">
