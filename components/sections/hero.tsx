@@ -1,12 +1,10 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { EthicalHero, type HangingProductItem } from "@/components/ui/hero-5";
-import {
-  AUDIENCE,
-  BRAND_NAME,
-  LOCATION,
-  OFFER,
-} from "@/lib/site";
+import { LOCATION } from "@/lib/site";
 
 const HERO_SHOWCASE: HangingProductItem[] = [
   {
@@ -51,14 +49,25 @@ export function Hero() {
     <div className="w-full bg-[radial-gradient(ellipse_120%_80%_at_50%_-15%,#faf7f2_0%,#f4ede3_45%,#f2ebe1_78%,#ebe2d6_100%)]">
       <EthicalHero
         title={
-          <>
-            Personalized engraved gifts
-            <br />
-            from <span className="font-serif">{BRAND_NAME}</span>,{" "}
-            <span className="text-primary">made for your story.</span>
-          </>
+          <span className="text-balance">
+            Turn a photo into a{" "}
+            <span className="text-primary">keepsake</span> they&apos;ll keep
+            forever.
+          </span>
         }
-        subtitle={`${OFFER} Built for ${AUDIENCE}. Serving ${LOCATION}.`}
+        subtitle={`Custom laser-engraved wood plaques for birthdays, anniversaries, graduations, and memorials — handcrafted to order in ${LOCATION}.`}
+        cta={
+          <Button
+            size="lg"
+            asChild
+            className="rounded-full bg-brand-primary px-8 text-white hover:bg-brand-secondary"
+          >
+            <a href="#personalize">
+              Personalize yours
+              <ArrowRight className="ml-2 size-4" aria-hidden />
+            </a>
+          </Button>
+        }
         hangingItems={HERO_SHOWCASE}
       />
     </div>

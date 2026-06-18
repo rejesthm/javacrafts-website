@@ -3,13 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ArrowLeft, LockKeyhole, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, LockKeyhole, MessageCircle, Trash2 } from "lucide-react";
 
 import { useCart } from "@/components/cart-provider";
 import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
-import { GHL_PAGE_SLUG_HOME, OFFER } from "@/lib/site";
+import { GHL_PAGE_SLUG_HOME, OFFER, getPrimaryContact } from "@/lib/site";
 import { formatPeso, type SavedLeadInfo } from "@/lib/order";
 
 const emptyLeadInfo: SavedLeadInfo = {
@@ -26,23 +26,68 @@ const emptyLeadInfo: SavedLeadInfo = {
 
 type LeadField = keyof SavedLeadInfo;
 
-const fields: Array<{
+type FieldConfig = {
   id: LeadField;
   label: string;
   type?: string;
   autoComplete?: string;
   required?: boolean;
-}> = [
-  { id: "name", label: "Name", autoComplete: "name", required: true },
-  { id: "email", label: "Email", type: "email", autoComplete: "email", required: true },
-  { id: "phone", label: "Phone number", type: "tel", autoComplete: "tel", required: true },
-  { id: "messenger", label: "Messenger", autoComplete: "url" },
-  { id: "houseStreet", label: "House, street", autoComplete: "address-line1", required: true },
+  inputMode?: React.InputHTMLAttributes<HTMLInputElement>["inputMode"];
+  placeholder?: string;
+};
+
+const fields: FieldConfig[] = [
+  { id: "name", label: "Name", autoComplete: "name", required: true, placeholder: "Maria Santos" },
+  {
+    id: "email",
+    label: "Email",
+    type: "email",
+    autoComplete: "email",
+    inputMode: "email",
+    required: true,
+    placeholder: "you@example.com",
+  },
+  {
+    id: "phone",
+    label: "Phone number",
+    type: "tel",
+    autoComplete: "tel",
+    inputMode: "tel",
+    required: true,
+    placeholder: "0917 123 4567",
+  },
+  { id: "messenger", label: "Messenger (optional)", autoComplete: "url", placeholder: "facebook.com/yourprofile" },
+  { id: "houseStreet", label: "House, street", autoComplete: "address-line1", required: true, placeholder: "123 Rizal St." },
   { id: "barangay", label: "Barangay", autoComplete: "address-line2", required: true },
-  { id: "postalCode", label: "Postal code", autoComplete: "postal-code", required: true },
-  { id: "city", label: "City", autoComplete: "address-level2", required: true },
-  { id: "region", label: "Region", autoComplete: "address-level1", required: true },
+  {
+    id: "postalCode",
+    label: "Postal code",
+    autoComplete: "postal-code",
+    inputMode: "numeric",
+    required: true,
+    placeholder: "8000",
+  },
+  { id: "city", label: "City / Municipality", autoComplete: "address-level2", required: true, placeholder: "Kapalong" },
+  { id: "region", label: "Region / Province", autoComplete: "address-level1", required: true, placeholder: "Davao del Norte" },
 ];
+
+/** PH mobile, ignoring spaces/dashes. */
+const PH_MOBILE = /^(\+?63|0)9\d{9}$/;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validate(info: SavedLeadInfo): Partial<Record<LeadField, string>> {
+  const errs: Partial<Record<LeadField, string>> = {};
+  if (!info.name.trim()) errs.name = "Please enter your name.";
+  if (!EMAIL.test(info.email.trim())) errs.email = "Enter a valid email address.";
+  if (!PH_MOBILE.test(info.phone.replace(/[\s-]/g, "")))
+    errs.phone = "Enter a valid PH mobile number (e.g. 0917 123 4567).";
+  if (!info.houseStreet.trim()) errs.houseStreet = "Please enter your house and street.";
+  if (!info.barangay.trim()) errs.barangay = "Please enter your barangay.";
+  if (!/^\d{4}$/.test(info.postalCode.trim())) errs.postalCode = "Postal code must be 4 digits.";
+  if (!info.city.trim()) errs.city = "Please enter your city or municipality.";
+  if (!info.region.trim()) errs.region = "Please enter your region or province.";
+  return errs;
+}
 
 export function CheckoutClient() {
   const router = useRouter();
@@ -56,10 +101,13 @@ export function CheckoutClient() {
     saveLeadInfo,
     clearSavedLeadInfo,
   } = useCart();
+  const formRef = useRef<HTMLFormElement | null>(null);
   const [leadInfo, setLeadInfo] = useState<SavedLeadInfo>(emptyLeadInfo);
   const [saveForNextTime, setSaveForNextTime] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<LeadField, string>>>({});
+  const contact = getPrimaryContact();
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +124,18 @@ export function CheckoutClient() {
 
   function updateField(field: LeadField, value: string) {
     setLeadInfo((current) => ({ ...current, [field]: value }));
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function focusField(field: LeadField) {
+    formRef.current
+      ?.querySelector<HTMLInputElement>(`[name="${field}"]`)
+      ?.focus();
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -84,6 +144,14 @@ export function CheckoutClient() {
 
     if (items.length === 0) {
       setError("Your cart is empty. Add a personalized item before checkout.");
+      return;
+    }
+
+    const errs = validate(leadInfo);
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      setError("Please fix the highlighted fields and try again.");
+      focusField(Object.keys(errs)[0] as LeadField);
       return;
     }
 
@@ -142,6 +210,41 @@ export function CheckoutClient() {
     );
   }
 
+  function renderField(field: FieldConfig) {
+    const message = fieldErrors[field.id];
+    const errorId = `${field.id}-error`;
+    return (
+      <div key={field.id}>
+        <label htmlFor={field.id} className="block text-sm font-semibold text-brand-text">
+          {field.label}
+        </label>
+        <input
+          id={field.id}
+          name={field.id}
+          type={field.type ?? "text"}
+          inputMode={field.inputMode}
+          autoComplete={field.autoComplete}
+          placeholder={field.placeholder}
+          required={field.required}
+          aria-invalid={message ? true : undefined}
+          aria-describedby={message ? errorId : undefined}
+          value={leadInfo[field.id]}
+          onChange={(e) => updateField(field.id, e.target.value)}
+          className={`mt-2 w-full min-h-12 rounded-[16px] border bg-brand-bg px-4 font-normal text-brand-text placeholder:text-brand-muted/80 focus:outline-none focus:ring-2 ${
+            message
+              ? "border-red-400 focus:border-red-500 focus:ring-red-200"
+              : "border-brand-primary/25 focus:border-brand-primary focus:ring-brand-primary/25"
+          }`}
+        />
+        {message ? (
+          <p id={errorId} className="mt-1.5 text-sm text-red-700">
+            {message}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <Section className="py-12">
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -154,61 +257,40 @@ export function CheckoutClient() {
             Continue personalizing
           </Link>
           <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl">
-            Lead Capture
+            Almost done — where should we send it?
           </h1>
+          <p className="mt-2 max-w-xl text-brand-muted">
+            Add your contact and delivery details and we&apos;ll confirm the rest with you
+            personally.
+          </p>
         </div>
         <p className="rounded-full bg-brand-primary/10 px-4 py-2 text-sm font-semibold text-brand-text">
-          {items.length} item{items.length === 1 ? "" : "s"} - {formatPeso(total)}
+          {items.length} item{items.length === 1 ? "" : "s"} · {formatPeso(total)}
         </p>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
         <form
+          ref={formRef}
           onSubmit={onSubmit}
+          noValidate
           className="rounded-[24px] border border-brand-primary/15 bg-brand-surface p-5 shadow-sm sm:p-6"
         >
-          <div className="grid gap-4 sm:grid-cols-2">
-            {fields.slice(0, 4).map((field) => (
-              <label key={field.id} className="block text-sm font-semibold text-brand-text">
-                {field.label}
-                <input
-                  type={field.type ?? "text"}
-                  autoComplete={field.autoComplete}
-                  required={field.required}
-                  value={leadInfo[field.id]}
-                  onChange={(e) => updateField(field.id, e.target.value)}
-                  className="mt-2 w-full min-h-12 rounded-[16px] border border-brand-primary/25 bg-brand-bg px-4 font-normal text-brand-text placeholder:text-brand-muted/70 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/25"
-                />
-              </label>
-            ))}
-          </div>
+          <div className="grid gap-4 sm:grid-cols-2">{fields.slice(0, 4).map(renderField)}</div>
 
           <div className="mt-5">
-            <label className="block text-sm font-semibold text-brand-text">
+            <label htmlFor="country" className="block text-sm font-semibold text-brand-text">
               Address country
-              <input
-                value="Philippines"
-                disabled
-                className="mt-2 w-full min-h-12 rounded-[16px] border border-brand-primary/20 bg-brand-primary/5 px-4 font-normal text-brand-muted"
-              />
             </label>
+            <input
+              id="country"
+              value="Philippines"
+              disabled
+              className="mt-2 w-full min-h-12 rounded-[16px] border border-brand-primary/20 bg-brand-primary/5 px-4 font-normal text-brand-muted"
+            />
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            {fields.slice(4).map((field) => (
-              <label key={field.id} className="block text-sm font-semibold text-brand-text">
-                {field.label}
-                <input
-                  type={field.type ?? "text"}
-                  autoComplete={field.autoComplete}
-                  required={field.required}
-                  value={leadInfo[field.id]}
-                  onChange={(e) => updateField(field.id, e.target.value)}
-                  className="mt-2 w-full min-h-12 rounded-[16px] border border-brand-primary/25 bg-brand-bg px-4 font-normal text-brand-text placeholder:text-brand-muted/70 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/25"
-                />
-              </label>
-            ))}
-          </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">{fields.slice(4).map(renderField)}</div>
 
           <label className="mt-5 flex items-start gap-3 rounded-[16px] bg-brand-bg p-4 text-sm text-brand-text">
             <input
@@ -226,9 +308,21 @@ export function CheckoutClient() {
           </label>
 
           {error ? (
-            <p role="alert" className="mt-5 rounded-[16px] border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
-              {error}
-            </p>
+            <div
+              role="alert"
+              className="mt-5 rounded-[16px] border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900"
+            >
+              <p>{error}</p>
+              {contact ? (
+                <a
+                  href={contact.href}
+                  className="mt-2 inline-flex items-center gap-1.5 font-semibold text-red-900 underline underline-offset-2"
+                >
+                  <MessageCircle className="size-4" aria-hidden />
+                  {contact.label}
+                </a>
+              ) : null}
+            </div>
           ) : null}
 
           <Button
@@ -237,7 +331,7 @@ export function CheckoutClient() {
             className="mt-6 min-h-12 w-full rounded-full bg-brand-primary text-white hover:bg-brand-secondary"
           >
             <LockKeyhole className="mr-2 size-4" aria-hidden />
-            {pending ? "Sending lead..." : "Submit lead"}
+            {pending ? "Sending order..." : "Submit order"}
           </Button>
         </form>
 
@@ -262,7 +356,7 @@ export function CheckoutClient() {
                       <div>
                         <p className="font-semibold text-brand-text">{item.productName}</p>
                         <p className="mt-1 text-sm text-brand-muted">
-                          {item.sizeLabel} - {item.dimensions}
+                          {item.sizeLabel} · {item.dimensions}
                         </p>
                       </div>
                       <button
@@ -293,8 +387,8 @@ export function CheckoutClient() {
               <span className="text-xl font-bold">{formatPeso(total)}</span>
             </div>
             <p className="mt-2 text-sm text-brand-muted">
-              No shipping, discounts, taxes, or payment processing are included in this lead
-              capture step.
+              We&apos;ll confirm delivery and payment (GCash or bank transfer) with you
+              personally after you submit.
             </p>
           </div>
         </aside>

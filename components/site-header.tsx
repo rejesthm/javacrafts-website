@@ -7,9 +7,9 @@ import { BRAND_NAME } from "@/lib/site";
 
 const nav = [
   { label: "Home", href: "/" },
-  { label: "Menu", href: "/#menu" },
-  { label: "About", href: "/#about" },
-  { label: "Gallery", href: "/#gallery" },
+  { label: "Personalize", href: "/#personalize" },
+  { label: "Reviews", href: "/#gallery" },
+  { label: "FAQ", href: "/#faq" },
 ] as const;
 
 export function SiteHeader() {

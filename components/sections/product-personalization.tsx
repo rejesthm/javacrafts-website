@@ -18,26 +18,31 @@ import {
   type ProductSizeId,
 } from "@/lib/order";
 
-const WORK_SAMPLE_IMAGES: { src: string; alt: string }[] = [
+const WORK_SAMPLE_IMAGES: { src: string; alt: string; caption: string }[] = [
   {
     src: "/products/plaque-custom.png",
     alt: "Laser-engraved wooden plaque with portrait and personalized name",
+    caption: "Custom portrait · 8×6 in · P650",
   },
   {
     src: "/products/plaque-portrait.png",
     alt: "Wooden plaque with detailed engraved portrait on a stand",
+    caption: "Engraved portrait · 5×7 in · P400",
   },
   {
     src: "/products/plaque-family.png",
     alt: "Family portrait engraved on a light wood plaque",
+    caption: "Family keepsake · 10×8 in · P850",
   },
   {
     src: "/products/plaque-appreciation.png",
     alt: "Custom appreciation plaque with photo and ceremony details",
+    caption: "Appreciation plaque · 8×6 in · P650",
   },
   {
     src: "/products/plaque-commemorative.png",
     alt: "Commemorative wooden plaque with engraved portrait and dedication",
+    caption: "Commemorative piece · 10×8 in · P850",
   },
 ];
 
@@ -226,6 +231,10 @@ export function ProductPersonalization() {
                 onChange={onPhotoChange}
                 className="sr-only"
               />
+              <p className="mt-2 text-sm text-brand-muted">
+                Tip: a clear, high-contrast, well-lit photo with visible faces
+                engraves the sharpest.
+              </p>
               {photo ? (
                 <div className="mt-3 overflow-hidden rounded-[16px] border border-brand-primary/15">
                   <Image
@@ -253,7 +262,7 @@ export function ProductPersonalization() {
                 }}
                 maxLength={120}
                 placeholder="Example: Maria, Batch 2026, Love always"
-                className="mt-2 w-full min-h-12 rounded-[16px] border border-brand-primary/25 bg-brand-bg px-4 text-brand-text placeholder:text-brand-muted/70 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/25"
+                className="mt-2 w-full min-h-12 rounded-[16px] border border-brand-primary/25 bg-brand-bg px-4 text-brand-text placeholder:text-brand-muted/80 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/25"
               />
             </div>
 
@@ -269,10 +278,20 @@ export function ProductPersonalization() {
               </p>
             ) : null}
 
+            <div className="flex items-center justify-between gap-3 border-t border-brand-primary/10 pt-4">
+              <span className="text-sm font-medium text-brand-muted">
+                Your plaque ({selectedSize.label} · {selectedSize.dimensions})
+              </span>
+              <span className="text-xl font-bold text-brand-text">
+                {formatPeso(selectedSize.price)}
+              </span>
+            </div>
+
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button
                 type="submit"
                 disabled={!canAdd}
+                aria-describedby={!canAdd ? "add-to-cart-hint" : undefined}
                 className="min-h-12 flex-1 rounded-full bg-brand-primary text-white hover:bg-brand-secondary"
               >
                 <ShoppingBag className="mr-2 size-4" aria-hidden />
@@ -298,6 +317,16 @@ export function ProductPersonalization() {
                 </Button>
               )}
             </div>
+
+            {!canAdd ? (
+              <p id="add-to-cart-hint" className="text-sm text-brand-muted">
+                {!photo && !customText.trim()
+                  ? "Upload a photo and add the text/name to enable “Add to cart”."
+                  : !photo
+                    ? "Upload a photo to enable “Add to cart”."
+                    : "Add the text/name to enable “Add to cart”."}
+              </p>
+            ) : null}
           </form>
 
           {items.length > 0 ? (
@@ -356,19 +385,24 @@ export function ProductPersonalization() {
           aria-label="Examples of engraved plaques"
         >
           {WORK_SAMPLE_IMAGES.map((sample) => (
-            <div
+            <figure
               key={sample.src}
               role="listitem"
-              className="relative aspect-[3/4] w-[42vw] max-w-[200px] shrink-0 snap-center overflow-hidden rounded-[16px] border border-brand-primary/15 bg-brand-bg shadow-sm sm:w-auto sm:max-w-none"
+              className="w-[42vw] max-w-[200px] shrink-0 snap-center sm:w-auto sm:max-w-none"
             >
-              <Image
-                src={sample.src}
-                alt={sample.alt}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 42vw, (max-width: 1024px) 20vw, 18vw"
-              />
-            </div>
+              <div className="relative aspect-[3/4] overflow-hidden rounded-[16px] border border-brand-primary/15 bg-brand-bg shadow-sm">
+                <Image
+                  src={sample.src}
+                  alt={sample.alt}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 42vw, (max-width: 1024px) 20vw, 18vw"
+                />
+              </div>
+              <figcaption className="mt-2 text-center text-xs font-medium text-brand-muted">
+                {sample.caption}
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>

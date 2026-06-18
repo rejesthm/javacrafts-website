@@ -90,7 +90,7 @@ export function SocialProof() {
       >
         <h2
           id="proof-heading"
-          className="text-center font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl"
+          className="text-balance text-center font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl"
         >
           Loved by people who like gifts with heart
         </h2>

@@ -25,7 +25,9 @@ export default function ThankYouPage() {
             You&apos;re all set
           </h1>
           <p className="mt-4 text-lg text-brand-muted">
-            We will follow up shortly. Check your inbox for next steps.
+            We&apos;ve received your order request. We&apos;ll message you shortly to
+            confirm your design, delivery, and GCash or bank payment details. Keep an eye
+            on your inbox and Messenger.
           </p>
           <Link
             href="/"

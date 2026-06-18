@@ -21,6 +21,14 @@ const faqs = [
     q: "What payment methods do you accept?",
     a: "We accept GCash and bank transfer.",
   },
+  {
+    q: "How do I get my plaque, and how much is delivery?",
+    a: "After you submit your order, we’ll confirm the delivery option and cost with you directly. We ship by courier within the Philippines, and local pickup or meet-up around Maniki, Kapalong, and Davao del Norte is also available. Delivery fees depend on your location and the courier.",
+  },
+  {
+    q: "What if the engraving isn’t right?",
+    a: "We confirm your photo and text with you before production to avoid mistakes. If a finished piece arrives damaged or doesn’t match what we approved, just message us with a photo and we’ll make it right with a repair or remake.",
+  },
 ];
 
 export function Faq() {

@@ -8,15 +8,28 @@ import {
   OFFER,
 } from "@/lib/site";
 
+/** PH mobile, ignoring spaces/dashes: 0917 123 4567, +63 917…, 63917… */
+const PH_MOBILE = /^(\+?63|0)9\d{9}$/;
+
 const leadSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(200),
   email: z.string().trim().email("Valid email required"),
-  phone: z.string().trim().min(5, "Phone is required").max(50),
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Phone is required")
+    .max(50)
+    .refine((v) => PH_MOBILE.test(v.replace(/[\s-]/g, "")), {
+      message: "Enter a valid PH mobile number (e.g. 0917 123 4567).",
+    }),
   messenger: z.string().trim().max(200).optional().default(""),
   country: z.literal("Philippines").default("Philippines"),
   houseStreet: z.string().trim().min(1, "House and street are required").max(300),
   barangay: z.string().trim().min(1, "Barangay is required").max(200),
-  postalCode: z.string().trim().min(1, "Postal code is required").max(30),
+  postalCode: z
+    .string()
+    .trim()
+    .refine((v) => /^\d{4}$/.test(v), { message: "Postal code must be 4 digits." }),
   city: z.string().trim().min(1, "City is required").max(120),
   region: z.string().trim().min(1, "Region is required").max(120),
   saveForNextTime: z.string().optional(),
@@ -70,10 +83,18 @@ function dataUrlToPhotoPayload(dataUrl: string) {
 }
 
 export async function POST(request: Request) {
-  const webhookUrl = process.env.NEXT_PUBLIC_GHL_WEBHOOK_URL;
+  // Server-only: must NOT be NEXT_PUBLIC_* so the CRM webhook is never shipped
+  // to the browser bundle where anyone could spam it.
+  const webhookUrl = process.env.GHL_WEBHOOK_URL;
   if (!webhookUrl) {
+    console.error(
+      "[ghl-lead] GHL_WEBHOOK_URL is not set — lead could not be forwarded.",
+    );
     return NextResponse.json(
-      { error: "Server is missing webhook configuration." },
+      {
+        error:
+          "We couldn't send your order just now. Please message us and we'll take it from there.",
+      },
       { status: 503 },
     );
   }
@@ -125,6 +146,8 @@ export async function POST(request: Request) {
   const pageSlug = lead.pageSlug || GHL_PAGE_SLUG_HOME;
   const offer = lead.offer || OFFER;
   const { firstName, lastName } = splitName(lead.name);
+  const orderId = crypto.randomUUID();
+  const submittedAt = new Date().toISOString();
 
   const items = cart.map((item, index) => {
     const photo = dataUrlToPhotoPayload(item.photo.dataUrl);
@@ -147,6 +170,8 @@ export async function POST(request: Request) {
   });
 
   const payload = {
+    orderId,
+    submittedAt,
     name: lead.name,
     email: lead.email,
     phone: lead.phone,
@@ -182,17 +207,27 @@ export async function POST(request: Request) {
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
+      console.error(
+        `[ghl-lead] Webhook responded ${res.status} for order ${orderId}.`,
+      );
       return NextResponse.json(
-        { error: "Could not reach CRM. Try again in a moment." },
+        {
+          error:
+            "We couldn't reach our system just now. Please try again in a moment, or message us and we'll take it from there.",
+        },
         { status: 502 },
       );
     }
-  } catch {
+  } catch (err) {
+    console.error(`[ghl-lead] Webhook request failed for order ${orderId}:`, err);
     return NextResponse.json(
-      { error: "Could not reach CRM. Try again in a moment." },
+      {
+        error:
+          "We couldn't reach our system just now. Please try again in a moment, or message us and we'll take it from there.",
+      },
       { status: 502 },
     );
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, orderId });
 }

@@ -50,7 +50,7 @@ export function TestimonialsColumn(props: {
                     <div className="font-medium tracking-tight leading-5 text-brand-text">
                       {name}
                     </div>
-                    <div className="leading-5 opacity-60 tracking-tight text-brand-muted">
+                    <div className="leading-5 tracking-tight text-brand-muted">
                       {role}
                     </div>
                   </div>
