@@ -22,7 +22,7 @@ export function saveStoredCart(
   items: CartItem[],
 ) {
   if (items.length === 0) {
-    storage.removeItem(CART_STORAGE_KEY);
+    clearStoredCheckoutData(storage);
     return;
   }
   storage.setItem(CART_STORAGE_KEY, JSON.stringify(items));

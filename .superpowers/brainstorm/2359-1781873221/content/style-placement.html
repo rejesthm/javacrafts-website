@@ -1,0 +1,94 @@
+<h2>Where should engraving styles go?</h2>
+<p class="subtitle">The builder will also gain a product picker, so this chooses the cleanest sequence around product, size, style, photo, and text.</p>
+
+<div class="cards">
+  <div class="card" data-choice="after-size-step" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">A. Style after size</div>
+        <div class="mockup-body" style="display:grid;grid-template-columns:1fr 210px;gap:14px;min-height:310px">
+          <div>
+            <div style="font-weight:700;margin-bottom:10px">1 Choose a product</div>
+            <div class="placeholder" style="height:42px;margin-bottom:14px">Product cards</div>
+            <div style="font-weight:700;margin-bottom:10px">2 Choose a size</div>
+            <div class="placeholder" style="height:54px;margin-bottom:14px">S / M / L price cards</div>
+            <div style="font-weight:700;margin-bottom:10px;color:#b77a2b">3 Choose an engraving style</div>
+            <div class="placeholder" style="height:54px;margin-bottom:14px">No style / Sketch / Cross-hatching</div>
+            <div style="font-weight:700;margin-bottom:10px">4 Upload photo</div>
+            <div class="placeholder" style="height:42px;margin-bottom:14px">Drop zone</div>
+            <div style="font-weight:700;margin-bottom:10px">5 Add text</div>
+            <div class="placeholder" style="height:38px">Text field</div>
+          </div>
+          <div class="mock-content">
+            <strong>Your design</strong>
+            <div class="placeholder" style="height:82px;margin-top:12px">Preview shows style</div>
+            <button class="mock-button" style="margin-top:12px;width:100%">Add to cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>After Size</h3>
+      <p>Recommended: styles affect price and engraving look, so customers choose them before uploading and writing text.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="preview-panel" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">B. Style in preview rail</div>
+        <div class="mockup-body" style="display:grid;grid-template-columns:1fr 210px;gap:14px;min-height:310px">
+          <div>
+            <div style="font-weight:700;margin-bottom:10px">1 Choose a product</div>
+            <div class="placeholder" style="height:52px;margin-bottom:14px">Product cards</div>
+            <div style="font-weight:700;margin-bottom:10px">2 Choose a size</div>
+            <div class="placeholder" style="height:72px;margin-bottom:14px">Size cards</div>
+            <div style="font-weight:700;margin-bottom:10px">3 Upload photo</div>
+            <div class="placeholder" style="height:52px;margin-bottom:14px">Drop zone</div>
+            <div style="font-weight:700;margin-bottom:10px">4 Add text</div>
+            <div class="placeholder" style="height:38px">Text field</div>
+          </div>
+          <div class="mock-content">
+            <strong>Your design</strong>
+            <div class="placeholder" style="height:70px;margin-top:12px">Preview</div>
+            <div style="font-weight:700;margin-top:12px;color:#b77a2b">Style</div>
+            <div class="placeholder" style="height:52px;margin-top:8px">Style chips</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Preview Rail</h3>
+      <p>Compact on the left, but style can feel like an afterthought and may be missed on mobile.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="combined-size-style" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">C. Size + style matrix</div>
+        <div class="mockup-body" style="display:grid;grid-template-columns:1fr 210px;gap:14px;min-height:310px">
+          <div>
+            <div style="font-weight:700;margin-bottom:10px">1 Choose a product</div>
+            <div class="placeholder" style="height:48px;margin-bottom:14px">Product cards</div>
+            <div style="font-weight:700;margin-bottom:10px;color:#b77a2b">2 Choose size and style</div>
+            <div class="placeholder" style="height:118px;margin-bottom:14px">Rows: S/M/L, columns: No style/Sketch/Cross-hatching</div>
+            <div style="font-weight:700;margin-bottom:10px">3 Upload photo</div>
+            <div class="placeholder" style="height:44px;margin-bottom:14px">Drop zone</div>
+            <div style="font-weight:700;margin-bottom:10px">4 Add text</div>
+            <div class="placeholder" style="height:38px">Text field</div>
+          </div>
+          <div class="mock-content">
+            <strong>Your design</strong>
+            <div class="placeholder" style="height:82px;margin-top:12px">Preview</div>
+            <button class="mock-button" style="margin-top:12px;width:100%">Add to cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Matrix</h3>
+      <p>Efficient for many prices, but visually heavy and harder to scan on phones.</p>
+    </div>
+  </div>
+</div>

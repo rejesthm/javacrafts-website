@@ -15,7 +15,6 @@ import { isValidEmail } from "@/lib/order";
 import {
   CHECKOUT_LEAD_STORAGE_KEY,
   LEAD_STORAGE_KEY,
-  clearStoredCart,
   clearStoredCheckoutData,
   readStoredCart,
   saveStoredCart,
@@ -84,7 +83,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([]);
     const storage = storageAvailable();
     if (storage) {
-      clearStoredCart(storage);
+      clearStoredCheckoutData(storage);
     }
   }, []);
 
