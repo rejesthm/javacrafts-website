@@ -329,10 +329,41 @@ export function verifyPaymongoWebhookSignature(
   signatureHeader: string | null | undefined,
 ) {
   if (!signatureHeader || !secret) return false;
-  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  if (signatureHeader.includes("=")) {
+    const parts = parsePaymongoSignatureHeader(signatureHeader);
+    const timestamp = parts.get("t");
+    if (!timestamp) return false;
 
+    const expected = createHmac("sha256", secret)
+      .update(`${timestamp}.${rawBody}`)
+      .digest("hex");
+
+    return [parts.get("te"), parts.get("li")].some((candidate) =>
+      timingSafeHexEqual(expected, candidate),
+    );
+  }
+
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  return timingSafeHexEqual(expected, signatureHeader);
+}
+
+function parsePaymongoSignatureHeader(signatureHeader: string) {
+  const parts = new Map<string, string>();
+  for (const segment of signatureHeader.split(",")) {
+    const [key, ...valueParts] = segment.trim().split("=");
+    if (!key) continue;
+    parts.set(key, valueParts.join("="));
+  }
+  return parts;
+}
+
+function timingSafeHexEqual(expected: string, candidate: string | undefined) {
+  if (!candidate) return false;
   try {
-    return timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader));
+    const expectedBuffer = Buffer.from(expected, "hex");
+    const candidateBuffer = Buffer.from(candidate, "hex");
+    if (expectedBuffer.length !== candidateBuffer.length) return false;
+    return timingSafeEqual(expectedBuffer, candidateBuffer);
   } catch {
     return false;
   }

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Ornament } from "@/components/ui/ornament";
 import { Reveal } from "@/components/ui/reveal";
 import { Section } from "@/components/ui/section";
+import { submitCheckoutLead } from "@/lib/checkout-lead-submit";
 import { GHL_PAGE_SLUG_HOME, OFFER } from "@/lib/site";
 import {
   ACCEPTED_PHOTO_TYPES,
@@ -231,31 +232,23 @@ export function ProductPersonalization() {
   }
 
   async function handleLeadSubmit(lead: SavedCheckoutLead) {
-    // Save locally first so we keep the contact for follow-up even if the
-    // network/CRM is unavailable; the send below is best-effort.
+    await submitCheckoutLead({
+      name: lead.name,
+      email: lead.email,
+      pageSlug: GHL_PAGE_SLUG_HOME,
+      offer: OFFER,
+      cart: {
+        itemCount: items.length,
+        total,
+        items: items.map((item) => ({
+          productName: item.productName,
+          size: item.sizeLabel,
+          customText: item.customText,
+          price: item.price,
+        })),
+      },
+    });
     saveCheckoutLead(lead);
-    try {
-      await fetch("/api/checkout-lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: lead.name,
-          email: lead.email,
-          pageSlug: GHL_PAGE_SLUG_HOME,
-          offer: OFFER,
-          cart: {
-            itemCount: items.length,
-            total,
-            items: items.map((item) => ({
-              productName: item.productName,
-              size: item.sizeLabel,
-            })),
-          },
-        }),
-      });
-    } catch {
-      // Best-effort: the lead is already saved locally for follow-up.
-    }
     router.push("/checkout");
   }
 

@@ -55,7 +55,7 @@ function formatExpiry(value: string | null) {
 
 export function CheckoutPaymentClient({ orderId }: { orderId: string }) {
   const router = useRouter();
-  const { clearCart } = useCart();
+  const { clearCheckoutData } = useCart();
   const contact = getPrimaryContact();
   const [payment, setPayment] = useState<PaymentDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +100,7 @@ export function CheckoutPaymentClient({ orderId }: { orderId: string }) {
         setError(null);
 
         if (data.payment.status === "paid") {
-          clearCart();
+          clearCheckoutData();
           router.replace(`/thank-you?order=${orderId}`);
           return;
         }
@@ -126,7 +126,7 @@ export function CheckoutPaymentClient({ orderId }: { orderId: string }) {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [clearCart, orderId, router]);
+  }, [clearCheckoutData, orderId, router]);
 
   return (
     <Section className="py-12 sm:py-16">

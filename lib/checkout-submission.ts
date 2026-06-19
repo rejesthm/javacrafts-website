@@ -141,6 +141,58 @@ export type PhotoUpload = {
   extension: string;
 };
 
+export type GhlSummaryItem = {
+  productName: string;
+  size?: string;
+  customText?: string;
+};
+
+export function buildGhlProductSummary(items: readonly GhlSummaryItem[]) {
+  return items
+    .map((item) => {
+      const size = item.size?.trim();
+      return `1x ${item.productName}${size ? ` (${size})` : ""}`;
+    })
+    .join(", ");
+}
+
+export function buildGhlCustomTextSummary(
+  items: readonly Pick<GhlSummaryItem, "customText">[],
+) {
+  return items
+    .map((item) => item.customText?.trim())
+    .filter((value): value is string => Boolean(value))
+    .join(", ");
+}
+
+export function buildGhlShippingAddress(
+  address: CheckoutSubmission["lead"]["address"],
+) {
+  return {
+    line1: address.houseStreet,
+    line2: address.barangay,
+    city: address.city,
+    state: address.region,
+    postalCode: address.postalCode,
+    country: "PH" as const,
+  };
+}
+
+export function buildGhlFullAddress(
+  address: CheckoutSubmission["lead"]["address"],
+) {
+  return [
+    address.houseStreet,
+    address.barangay,
+    address.city,
+    address.region,
+    address.postalCode,
+    "PH",
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
 function getFormString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value : "";
@@ -265,6 +317,11 @@ export function buildCheckoutGhlPayload({
   submittedAt: string;
 }) {
   const { firstName, lastName } = splitName(submission.lead.name);
+  const summaryItems = submission.cart.map((item) => ({
+    productName: item.productName,
+    size: item.sizeLabel,
+    customText: item.customText,
+  }));
   const items = submission.cart.map((item, index) => {
     const photo = dataUrlToPhotoPayload(item.photo.dataUrl);
     return {
@@ -293,14 +350,27 @@ export function buildCheckoutGhlPayload({
     phone: submission.lead.phone,
     firstName,
     lastName,
+    customer: {
+      name: submission.lead.name,
+      email: submission.lead.email,
+      phone: submission.lead.phone,
+      firstName,
+      lastName,
+    },
     messenger: submission.lead.messenger,
-    address: submission.lead.address,
+    address: {
+      ...submission.lead.address,
+      full: buildGhlFullAddress(submission.lead.address),
+    },
+    shippingAddress: buildGhlShippingAddress(submission.lead.address),
     order: {
       items,
       itemCount: items.length,
       total: submission.total,
       currency: "PHP" as const,
     },
+    productSummary: buildGhlProductSummary(summaryItems),
+    customText: buildGhlCustomTextSummary(summaryItems),
     source: GHL_SOURCE,
     pageSlug: submission.pageSlug,
     offer: submission.offer,

@@ -12,10 +12,15 @@ import {
 
 import type { CartItem, SavedCheckoutLead, SavedLeadInfo } from "@/lib/order";
 import { isValidEmail } from "@/lib/order";
-
-const CART_STORAGE_KEY = "java-crafts-cart";
-const LEAD_STORAGE_KEY = "java-crafts-lead-info";
-const CHECKOUT_LEAD_STORAGE_KEY = "java-crafts-checkout-lead";
+import {
+  CHECKOUT_LEAD_STORAGE_KEY,
+  LEAD_STORAGE_KEY,
+  clearStoredCart,
+  clearStoredCheckoutData,
+  readStoredCart,
+  saveStoredCart,
+  storageAvailable,
+} from "@/lib/checkout-storage";
 
 type CartContextValue = {
   items: CartItem[];
@@ -25,6 +30,7 @@ type CartContextValue = {
   addItem: (item: CartItem) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
+  clearCheckoutData: () => void;
   loadSavedLeadInfo: () => SavedLeadInfo | null;
   saveLeadInfo: (info: SavedLeadInfo) => void;
   clearSavedLeadInfo: () => void;
@@ -34,19 +40,6 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-function readCart() {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(CART_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as CartItem[]) : [];
-  } catch {
-    return [];
-  }
-}
-
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [ready, setReady] = useState(false);
@@ -55,7 +48,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
-      setItems(readCart());
+      const storage = storageAvailable();
+      setItems(storage ? readStoredCart(storage) : []);
       setReady(true);
     });
     return () => {
@@ -65,8 +59,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
+    const storage = storageAvailable();
+    if (!storage) return;
     try {
-      window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      saveStoredCart(storage, items);
     } catch {
       // Storage quota exceeded (e.g. very large photos) — keep the in-memory
       // cart working instead of crashing; it just won't survive a refresh.
@@ -86,15 +82,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     setItems([]);
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(CART_STORAGE_KEY);
+    const storage = storageAvailable();
+    if (storage) {
+      clearStoredCart(storage);
+    }
+  }, []);
+
+  const clearCheckoutData = useCallback(() => {
+    setItems([]);
+    const storage = storageAvailable();
+    if (storage) {
+      clearStoredCheckoutData(storage);
     }
   }, []);
 
   const loadSavedLeadInfo = useCallback(() => {
-    if (typeof window === "undefined") return null;
+    const storage = storageAvailable();
+    if (!storage) return null;
     try {
-      const raw = window.localStorage.getItem(LEAD_STORAGE_KEY);
+      const raw = storage.getItem(LEAD_STORAGE_KEY);
       return raw ? (JSON.parse(raw) as SavedLeadInfo) : null;
     } catch {
       return null;
@@ -102,20 +108,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveLeadInfo = useCallback((info: SavedLeadInfo) => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify(info));
+    const storage = storageAvailable();
+    if (!storage) return;
+    storage.setItem(LEAD_STORAGE_KEY, JSON.stringify(info));
   }, []);
 
   const clearSavedLeadInfo = useCallback(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.removeItem(LEAD_STORAGE_KEY);
+    const storage = storageAvailable();
+    if (!storage) return;
+    storage.removeItem(LEAD_STORAGE_KEY);
   }, []);
 
   // Returns a saved name/email only when both are present and the email looks
   // valid. Prefers the dedicated checkout-lead key, but falls back to a fully
   // saved address so returning customers also skip the gate.
   const loadSavedCheckoutLead = useCallback((): SavedCheckoutLead | null => {
-    if (typeof window === "undefined") return null;
+    const storage = storageAvailable();
+    if (!storage) return null;
     const fromRaw = (raw: string | null): SavedCheckoutLead | null => {
       if (!raw) return null;
       try {
@@ -130,8 +139,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
     try {
       return (
-        fromRaw(window.localStorage.getItem(CHECKOUT_LEAD_STORAGE_KEY)) ??
-        fromRaw(window.localStorage.getItem(LEAD_STORAGE_KEY))
+        fromRaw(storage.getItem(CHECKOUT_LEAD_STORAGE_KEY)) ??
+        fromRaw(storage.getItem(LEAD_STORAGE_KEY))
       );
     } catch {
       return null;
@@ -139,9 +148,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveCheckoutLead = useCallback((lead: SavedCheckoutLead) => {
-    if (typeof window === "undefined") return;
+    const storage = storageAvailable();
+    if (!storage) return;
     try {
-      window.localStorage.setItem(
+      storage.setItem(
         CHECKOUT_LEAD_STORAGE_KEY,
         JSON.stringify({ name: lead.name.trim(), email: lead.email.trim() }),
       );
@@ -159,6 +169,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       addItem,
       removeItem,
       clearCart,
+      clearCheckoutData,
       loadSavedLeadInfo,
       saveLeadInfo,
       clearSavedLeadInfo,
@@ -168,6 +179,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [
       addItem,
       clearCart,
+      clearCheckoutData,
       clearSavedLeadInfo,
       items,
       loadSavedCheckoutLead,

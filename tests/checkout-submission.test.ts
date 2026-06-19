@@ -104,4 +104,25 @@ test("builds a GHL payload copy with photo base64 for notification workflows", (
   assert.equal(payload.order.items[0]?.photo.base64, photoBase64);
   assert.equal(payload.order.currency, "PHP");
   assert.equal(payload.source, "nextjs-funnel");
+  assert.equal(payload.productSummary, "1x Personalized Engraved Plaque (M)");
+  assert.equal(payload.customText, "For Mama");
+  assert.deepEqual(payload.shippingAddress, {
+    line1: "123 Rizal St.",
+    line2: "Maniki",
+    city: "Kapalong",
+    state: "Davao del Norte",
+    postalCode: "8000",
+    country: "PH",
+  });
+  assert.equal(
+    payload.address.full,
+    "123 Rizal St., Maniki, Kapalong, Davao del Norte, 8000, PH",
+  );
+  assert.deepEqual(payload.customer, {
+    name: "Maria Santos",
+    email: "MARIA@example.com",
+    phone: "0917 123 4567",
+    firstName: "Maria",
+    lastName: "Santos",
+  });
 });

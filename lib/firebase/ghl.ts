@@ -2,8 +2,13 @@ import "server-only";
 
 import {
   buildCheckoutGhlPayload,
+  buildGhlCustomTextSummary,
+  buildGhlFullAddress,
+  buildGhlProductSummary,
+  buildGhlShippingAddress,
   splitName,
   type CheckoutSubmission,
+  type GhlSummaryItem,
   type OrderRecord,
 } from "@/lib/checkout-submission";
 import type { NormalizedPaymongoWebhookEvent, OrderPayment } from "@/lib/paymongo";
@@ -15,7 +20,7 @@ import {
   OFFER,
 } from "@/lib/site";
 
-type ForwardResult =
+export type ForwardResult =
   | { ok: true; skipped: false }
   | { ok: false; skipped: true; reason: "missing_webhook" }
   | { ok: false; skipped: false; reason: string };
@@ -38,6 +43,17 @@ async function postToGhl(payload: unknown, logPrefix: string): Promise<ForwardRe
   } catch (err) {
     console.error(`[${logPrefix}] GHL webhook request failed:`, err);
     return { ok: false, skipped: false, reason: "request_failed" };
+  }
+}
+
+function paymentEventType(status: NormalizedPaymongoWebhookEvent["status"]) {
+  switch (status) {
+    case "paid":
+      return "payment_paid";
+    case "expired":
+      return "payment_expired";
+    default:
+      return "payment_failed";
   }
 }
 
@@ -88,10 +104,17 @@ export async function forwardCheckoutLeadToGhl({
   cart?: {
     itemCount: number;
     total: number;
-    items: Array<{ productName: string; size?: string }>;
+    items: Array<GhlSummaryItem & { price?: number }>;
   };
 }) {
   const { firstName, lastName } = splitName(name);
+  const orderSummary = cart
+    ? {
+        itemCount: cart.itemCount,
+        total: cart.total,
+        currency: "PHP" as const,
+      }
+    : undefined;
   return postToGhl(
     {
       eventType: "checkout_lead_capture",
@@ -100,6 +123,12 @@ export async function forwardCheckoutLeadToGhl({
       email,
       firstName,
       lastName,
+      customer: {
+        name,
+        email,
+        firstName,
+        lastName,
+      },
       cart: cart
         ? {
             itemCount: cart.itemCount,
@@ -108,6 +137,9 @@ export async function forwardCheckoutLeadToGhl({
             items: cart.items,
           }
         : undefined,
+      order: orderSummary,
+      productSummary: cart ? buildGhlProductSummary(cart.items) : undefined,
+      customText: cart ? buildGhlCustomTextSummary(cart.items) : undefined,
       source: GHL_SOURCE,
       pageSlug: pageSlug || GHL_PAGE_SLUG_HOME,
       offer: offer || OFFER,
@@ -125,21 +157,39 @@ export async function forwardPaymentUpdateToGhl({
   order: OrderRecord;
   event: NormalizedPaymongoWebhookEvent;
 }) {
+  const { firstName, lastName } = splitName(order.customer.name);
+  const summaryItems = order.order.items.map((item) => ({
+    productName: item.productName,
+    size: item.sizeLabel,
+    customText: item.customText,
+  }));
+
   return postToGhl(
     {
-      eventType:
-        event.status === "paid"
-          ? "payment_paid"
-          : event.status === "expired"
-            ? "payment_expired"
-            : "payment_failed",
+      eventType: paymentEventType(event.status),
       orderId: order.orderId,
-      customer: order.customer,
+      customer: {
+        ...order.customer,
+        firstName,
+        lastName,
+      },
+      name: order.customer.name,
+      email: order.customer.email,
+      phone: order.customer.phone,
+      firstName,
+      lastName,
+      address: {
+        ...order.address,
+        full: buildGhlFullAddress(order.address),
+      },
+      shippingAddress: buildGhlShippingAddress(order.address),
       order: {
         itemCount: order.order.itemCount,
         total: order.order.total,
         currency: order.order.currency,
       },
+      productSummary: buildGhlProductSummary(summaryItems),
+      customText: buildGhlCustomTextSummary(summaryItems),
       payment: {
         ...order.payment,
         qrImageUrl: undefined,

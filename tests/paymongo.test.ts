@@ -87,6 +87,32 @@ test("verifies PayMongo webhook signatures against the raw body", () => {
   assert.equal(verifyPaymongoWebhookSignature(rawBody, secret, "bad"), false);
 });
 
+test("verifies PayMongo webhook signatures with timestamped headers", () => {
+  const rawBody = JSON.stringify({ data: { id: "evt_timestamped" } });
+  const secret = "whsec_test";
+  const timestamp = "1780000000";
+  const signature = createHmac("sha256", secret)
+    .update(`${timestamp}.${rawBody}`)
+    .digest("hex");
+
+  assert.equal(
+    verifyPaymongoWebhookSignature(
+      rawBody,
+      secret,
+      `t=${timestamp},te=${signature},li=`,
+    ),
+    true,
+  );
+  assert.equal(
+    verifyPaymongoWebhookSignature(
+      rawBody,
+      secret,
+      `t=${timestamp},te=bad,li=`,
+    ),
+    false,
+  );
+});
+
 test("normalizes payment paid webhook events", () => {
   const event = normalizePaymongoWebhookEvent({
     data: {

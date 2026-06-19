@@ -133,7 +133,12 @@ export async function saveCheckoutLead({
   cart?: {
     itemCount: number;
     total: number;
-    items: Array<{ productName: string; size?: string }>;
+    items: Array<{
+      productName: string;
+      size?: string;
+      customText?: string;
+      price?: number;
+    }>;
   };
 }) {
   const submittedAt = new Date().toISOString();
@@ -154,7 +159,7 @@ export async function saveCheckoutLead({
         : null,
     });
 
-  await forwardCheckoutLeadToGhl({
+  const ghl = await forwardCheckoutLeadToGhl({
     name,
     email,
     submittedAt,
@@ -163,7 +168,7 @@ export async function saveCheckoutLead({
     cart,
   });
 
-  return { leadId: docRef.id };
+  return { leadId: docRef.id, ghl };
 }
 
 async function signedUrlFor(storagePath: string) {

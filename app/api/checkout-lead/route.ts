@@ -9,6 +9,8 @@ export const runtime = "nodejs";
 const cartItemSummarySchema = z.object({
   productName: z.string().trim().min(1).max(120),
   size: z.string().trim().max(20).optional().default(""),
+  customText: z.string().trim().max(120).optional().default(""),
+  price: z.number().nonnegative().optional(),
 });
 
 const checkoutLeadSchema = z.object({
@@ -41,6 +43,22 @@ export async function POST(request: Request) {
 
   try {
     const result = await saveCheckoutLead(parsed.data);
+    if (!result.ghl.ok) {
+      const status = result.ghl.skipped ? 503 : 502;
+      const detail =
+        result.ghl.reason === "missing_webhook"
+          ? "GHL_WEBHOOK_URL is not configured."
+          : `GHL webhook failed: ${result.ghl.reason}.`;
+      console.error(`[checkout-lead] ${detail}`);
+      return NextResponse.json(
+        {
+          error:
+            "We couldn't send your details to our CRM just now. Please try again in a moment.",
+          ghl: result.ghl,
+        },
+        { status },
+      );
+    }
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     if (err instanceof FirebaseConfigError) {
