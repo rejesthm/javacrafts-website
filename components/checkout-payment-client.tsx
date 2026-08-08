@@ -40,9 +40,24 @@ type PaymentDetails = {
   paymentId: string | null;
 };
 
-type PaymentResponse =
-  | { ok: true; orderId: string; payment: PaymentDetails }
-  | { ok?: false; error?: string };
+type PaymentSnapshot = {
+  orderId: string;
+  payment: PaymentDetails;
+};
+
+function samePayment(
+  current: PaymentDetails | null,
+  next: PaymentDetails,
+) {
+  return (
+    current?.status === next.status &&
+    current.amount === next.amount &&
+    current.qrImageUrl === next.qrImageUrl &&
+    current.expiresAt === next.expiresAt &&
+    current.paidAt === next.paidAt &&
+    current.paymentId === next.paymentId
+  );
+}
 
 function formatExpiry(value: string | null) {
   if (!value) return "";
@@ -71,60 +86,39 @@ export function CheckoutPaymentClient({ orderId }: { orderId: string }) {
   );
 
   useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    const source = new EventSource(
+      `/api/checkout/payment/${encodeURIComponent(orderId)}/stream`,
+    );
 
-    async function loadStatus() {
-      try {
-        const res = await fetch(`/api/checkout/payment/${orderId}`, {
-          cache: "no-store",
-        });
-        const data = (await res.json().catch(() => ({}))) as PaymentResponse;
-        if (cancelled) return;
+    function onSnapshot(event: MessageEvent<string>) {
+      const data = JSON.parse(event.data) as PaymentSnapshot;
 
-        if (!res.ok) {
-          setError(
-            "error" in data && data.error
-              ? data.error
-              : "We couldn't load your payment status.",
-          );
-          return;
-        }
+      setPayment((current) =>
+        samePayment(current, data.payment) ? current : data.payment,
+      );
+      setLoading(false);
+      setError(null);
 
-        if (!data.ok) {
-          setError(data.error ?? "We couldn't load your payment status.");
-          return;
-        }
-
-        setPayment(data.payment);
-        setError(null);
-
-        if (data.payment.status === "paid") {
-          clearCheckoutData();
-          router.replace(`/thank-you?order=${orderId}`);
-          return;
-        }
-
-        if (
-          data.payment.status === "pending" ||
-          data.payment.status === "awaiting_payment"
-        ) {
-          timer = setTimeout(loadStatus, 2500);
-        }
-      } catch {
-        if (!cancelled) {
-          setError("Network error while checking payment status.");
-          timer = setTimeout(loadStatus, 4000);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+      if (data.payment.status === "paid") {
+        source.close();
+        clearCheckoutData();
+        router.replace(`/thank-you?order=${orderId}`);
       }
     }
 
-    loadStatus();
+    source.addEventListener("snapshot", onSnapshot as EventListener);
+    source.addEventListener("stream-error", () => {
+      setLoading(false);
+      setError("Live payment updates disconnected. Reconnecting…");
+    });
+    source.onerror = () => {
+      setLoading(false);
+      setError("Live payment updates disconnected. Reconnecting…");
+    };
+
     return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
+      source.removeEventListener("snapshot", onSnapshot as EventListener);
+      source.close();
     };
   }, [clearCheckoutData, orderId, router]);
 

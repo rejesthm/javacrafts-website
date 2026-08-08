@@ -9,6 +9,7 @@ export const runtime = "nodejs";
 const cartItemSummarySchema = z.object({
   productName: z.string().trim().min(1).max(120),
   size: z.string().trim().max(20).optional().default(""),
+  style: z.string().trim().max(120).optional().default(""),
   customText: z.string().trim().max(120).optional().default(""),
   price: z.number().nonnegative().optional(),
 });

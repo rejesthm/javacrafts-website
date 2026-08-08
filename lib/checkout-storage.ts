@@ -1,3 +1,4 @@
+import { DEFAULT_PRODUCT } from "@/lib/catalog";
 import type { CartItem } from "@/lib/order";
 
 export const CART_STORAGE_KEY = "java-crafts-cart";
@@ -11,10 +12,41 @@ export function readStoredCart(storage: Pick<Storage, "getItem">): CartItem[] {
     const raw = storage.getItem(CART_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as CartItem[]) : [];
+    return Array.isArray(parsed)
+      ? parsed.map(normalizeCartItem).filter((item): item is CartItem => Boolean(item))
+      : [];
   } catch {
     return [];
   }
+}
+
+function normalizeCartItem(value: unknown): CartItem | null {
+  if (!value || typeof value !== "object") return null;
+  const item = value as Partial<CartItem>;
+  if (!item.id || !item.sizeId || !item.sizeLabel || !item.dimensions || !item.photo) {
+    return null;
+  }
+
+  const defaultStyle = DEFAULT_PRODUCT.styles[0]!;
+  const price = Number(item.price ?? 0);
+  const stylePriceAdjustment = Number(item.stylePriceAdjustment ?? 0);
+
+  return {
+    id: String(item.id),
+    productId: item.productId || DEFAULT_PRODUCT.id,
+    productName: item.productName || DEFAULT_PRODUCT.name,
+    sizeId: String(item.sizeId),
+    sizeLabel: String(item.sizeLabel),
+    dimensions: String(item.dimensions),
+    sizePrice: Number(item.sizePrice ?? Math.max(0, price - stylePriceAdjustment)),
+    styleId: item.styleId || defaultStyle.id,
+    styleName: item.styleName || defaultStyle.name,
+    stylePriceAdjustment,
+    price,
+    customText: item.customText || "",
+    photo: item.photo,
+    createdAt: item.createdAt || new Date().toISOString(),
+  };
 }
 
 export function saveStoredCart(

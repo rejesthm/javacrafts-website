@@ -27,6 +27,7 @@ type CartContextValue = {
   total: number;
   ready: boolean;
   addItem: (item: CartItem) => void;
+  replaceCart: (items: CartItem[]) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
   clearCheckoutData: () => void;
@@ -73,6 +74,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback((item: CartItem) => {
     setItems((current) => [...current, item]);
+  }, []);
+
+  const replaceCart = useCallback((nextItems: CartItem[]) => {
+    setItems(nextItems);
   }, []);
 
   const removeItem = useCallback((id: string) => {
@@ -166,6 +171,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       total: items.reduce((sum, item) => sum + item.price, 0),
       ready,
       addItem,
+      replaceCart,
       removeItem,
       clearCart,
       clearCheckoutData,
@@ -184,6 +190,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       loadSavedCheckoutLead,
       loadSavedLeadInfo,
       ready,
+      replaceCart,
       removeItem,
       saveCheckoutLead,
       saveLeadInfo,

@@ -6,6 +6,7 @@ type LeadCartSummary = {
   items: Array<{
     productName: string;
     size?: string;
+    style?: string;
     customText?: string;
     price?: number;
   }>;

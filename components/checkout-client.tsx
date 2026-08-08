@@ -1,24 +1,26 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Building2,
+  Check,
   Globe,
   Hash,
   Heart,
   Home,
+  LockKeyhole,
   Mail,
   Map,
   MapPin,
-  LockKeyhole,
   MessageCircle,
   PackageCheck,
   Phone,
   ShieldCheck,
+  Store,
   Trash2,
   Truck,
   User,
@@ -29,18 +31,26 @@ import { useCart } from "@/components/cart-provider";
 import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
 import { GHL_PAGE_SLUG_HOME, OFFER, getPrimaryContact } from "@/lib/site";
-import { formatPeso, type SavedLeadInfo } from "@/lib/order";
+import { formatPeso, type CartItem, type SavedLeadInfo } from "@/lib/order";
+import type { DeliveryQuote, FulfillmentType } from "@/lib/catalog";
+import type { PsgcPlaceOption } from "@/lib/places";
 
 const emptyLeadInfo: SavedLeadInfo = {
   name: "",
   email: "",
   phone: "",
   messenger: "",
+  fulfillmentType: "delivery",
   houseStreet: "",
   barangay: "",
+  barangayCode: "",
   postalCode: "",
   city: "",
+  cityCode: "",
+  province: "",
+  provinceCode: "",
   region: "",
+  regionCode: "",
 };
 
 type LeadField = keyof SavedLeadInfo;
@@ -57,7 +67,7 @@ type FieldConfig = {
   helper?: string;
 };
 
-const fields: FieldConfig[] = [
+const contactFields: FieldConfig[] = [
   { id: "name", label: "Full name", icon: User, autoComplete: "name", required: true, placeholder: "Maria Santos" },
   {
     id: "email",
@@ -78,42 +88,13 @@ const fields: FieldConfig[] = [
     inputMode: "tel",
     required: true,
     placeholder: "0917 123 4567",
-    helper: "Philippine mobile — e.g. 0917 123 4567",
+    helper: "Philippine mobile - e.g. 0917 123 4567",
   },
   { id: "messenger", label: "Messenger (optional)", icon: MessageCircle, autoComplete: "url", placeholder: "facebook.com/yourprofile" },
-  { id: "houseStreet", label: "House, street", icon: Home, autoComplete: "address-line1", required: true, placeholder: "123 Rizal St." },
-  { id: "barangay", label: "Barangay", icon: MapPin, autoComplete: "address-line2", required: true, placeholder: "Maniki" },
-  {
-    id: "postalCode",
-    label: "Postal code",
-    icon: Hash,
-    autoComplete: "postal-code",
-    inputMode: "numeric",
-    required: true,
-    placeholder: "8000",
-    helper: "4 digits",
-  },
-  { id: "city", label: "City / Municipality", icon: Building2, autoComplete: "address-level2", required: true, placeholder: "Kapalong" },
-  { id: "region", label: "Region / Province", icon: Map, autoComplete: "address-level1", required: true, placeholder: "Davao del Norte" },
 ];
 
-/** PH mobile, ignoring spaces/dashes. */
 const PH_MOBILE = /^(\+?63|0)9\d{9}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function validate(info: SavedLeadInfo): Partial<Record<LeadField, string>> {
-  const errs: Partial<Record<LeadField, string>> = {};
-  if (!info.name.trim()) errs.name = "Please enter your name.";
-  if (!EMAIL.test(info.email.trim())) errs.email = "Enter a valid email address.";
-  if (!PH_MOBILE.test(info.phone.replace(/[\s-]/g, "")))
-    errs.phone = "Enter a valid PH mobile number (e.g. 0917 123 4567).";
-  if (!info.houseStreet.trim()) errs.houseStreet = "Please enter your house and street.";
-  if (!info.barangay.trim()) errs.barangay = "Please enter your barangay.";
-  if (!/^\d{4}$/.test(info.postalCode.trim())) errs.postalCode = "Postal code must be 4 digits.";
-  if (!info.city.trim()) errs.city = "Please enter your city or municipality.";
-  if (!info.region.trim()) errs.region = "Please enter your region or province.";
-  return errs;
-}
 
 const TRUST_BADGES = [
   { icon: ShieldCheck, label: "We confirm every detail before we engrave" },
@@ -121,12 +102,122 @@ const TRUST_BADGES = [
   { icon: Heart, label: "Made-right guarantee on every keepsake" },
 ];
 
+function optionFor(options: PsgcPlaceOption[], label: string) {
+  return options.find((option) => option.label === label) ?? null;
+}
+
+async function fetchPlaces({
+  level,
+  region,
+  province,
+  city,
+}: {
+  level: "region" | "province" | "city" | "barangay";
+  region?: string;
+  province?: string;
+  city?: string;
+}) {
+  const params = new URLSearchParams({ level });
+  if (region) params.set("region", region);
+  if (province) params.set("province", province);
+  if (city) params.set("city", city);
+  const res = await fetch(`/api/places?${params.toString()}`, { cache: "no-store" });
+  const data = (await res.json().catch(() => ({}))) as { options?: PsgcPlaceOption[] };
+  return Array.isArray(data.options) ? data.options : [];
+}
+
+function validate(info: SavedLeadInfo): Partial<Record<LeadField, string>> {
+  const errs: Partial<Record<LeadField, string>> = {};
+  if (!info.name.trim()) errs.name = "Please enter your name.";
+  if (!EMAIL.test(info.email.trim())) errs.email = "Enter a valid email address.";
+  if (!PH_MOBILE.test(info.phone.replace(/[\s-]/g, ""))) {
+    errs.phone = "Enter a valid PH mobile number (e.g. 0917 123 4567).";
+  }
+
+  if ((info.fulfillmentType ?? "delivery") === "pickup") return errs;
+
+  if (!info.houseStreet.trim()) errs.houseStreet = "Please enter your house and street.";
+  if (!info.region.trim()) errs.region = "Choose your region.";
+  if (!info.province.trim()) errs.province = "Choose your province.";
+  if (!info.city.trim()) errs.city = "Choose your city or municipality.";
+  if (!info.barangay.trim()) errs.barangay = "Choose your barangay.";
+  if (!/^\d{4}$/.test(info.postalCode.trim())) {
+    errs.postalCode = "Postal code must be 4 digits.";
+  }
+  return errs;
+}
+
+function PlaceInput({
+  id,
+  label,
+  icon: Icon,
+  value,
+  options,
+  disabled,
+  message,
+  onChange,
+}: {
+  id: LeadField;
+  label: string;
+  icon: LucideIcon;
+  value: string;
+  options: PsgcPlaceOption[];
+  disabled?: boolean;
+  message?: string;
+  onChange: (value: string, option: PsgcPlaceOption | null) => void;
+}) {
+  const listId = `${id}-options`;
+  const errorId = `${id}-error`;
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-semibold text-brand-text">
+        {label}<span className="ml-0.5 text-destructive" aria-hidden>*</span>
+      </label>
+      <div className="group relative mt-2">
+        <Icon
+          className={`pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 transition-colors ${
+            message ? "text-red-400" : "text-brand-gold/70 group-focus-within:text-brand-gold"
+          }`}
+          aria-hidden
+        />
+        <input
+          id={id}
+          name={id}
+          list={listId}
+          value={value}
+          disabled={disabled}
+          required
+          aria-invalid={message ? true : undefined}
+          aria-describedby={message ? errorId : undefined}
+          onChange={(e) => onChange(e.target.value, optionFor(options, e.target.value))}
+          className={`min-h-[3.25rem] w-full rounded-2xl border bg-brand-cream pl-12 pr-4 text-base text-brand-text placeholder:text-brand-muted/70 disabled:bg-brand-primary/5 disabled:text-brand-muted focus:outline-none focus:ring-2 ${
+            message
+              ? "border-red-400 focus:border-red-500 focus:ring-red-200"
+              : "border-brand-primary/15 focus:border-brand-gold focus:ring-brand-gold/25"
+          }`}
+        />
+        <datalist id={listId}>
+          {options.map((option) => (
+            <option key={option.code} value={option.label} />
+          ))}
+        </datalist>
+      </div>
+      {message ? (
+        <p id={errorId} role="alert" className="mt-1.5 text-sm font-medium text-red-700">
+          {message}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function CheckoutClient() {
   const router = useRouter();
   const {
     items,
     total,
     ready,
+    replaceCart,
     removeItem,
     loadSavedLeadInfo,
     loadSavedCheckoutLead,
@@ -139,7 +230,123 @@ export function CheckoutClient() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<LeadField, string>>>({});
+  const [regions, setRegions] = useState<PsgcPlaceOption[]>([]);
+  const [provinces, setProvinces] = useState<PsgcPlaceOption[]>([]);
+  const [cities, setCities] = useState<PsgcPlaceOption[]>([]);
+  const [barangays, setBarangays] = useState<PsgcPlaceOption[]>([]);
+  const [quote, setQuote] = useState<DeliveryQuote | null>(null);
   const contact = getPrimaryContact();
+  const fulfillmentType = leadInfo.fulfillmentType ?? "delivery";
+  const hasQuoteInputs =
+    fulfillmentType === "pickup" ||
+    Boolean(leadInfo.region && leadInfo.province && leadInfo.city && leadInfo.barangay);
+  const effectiveQuote = hasQuoteInputs ? quote : null;
+  const orderTotal = total + (effectiveQuote?.fee ?? 0);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPlaces({ level: "region" }).then((options) => {
+      if (!cancelled) setRegions(options);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!leadInfo.region) {
+      return;
+    }
+    fetchPlaces({ level: "province", region: leadInfo.region }).then((options) => {
+      if (!cancelled) setProvinces(options);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [leadInfo.region]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!leadInfo.region || !leadInfo.province) {
+      return;
+    }
+    fetchPlaces({
+      level: "city",
+      region: leadInfo.region,
+      province: leadInfo.province,
+    }).then((options) => {
+      if (!cancelled) setCities(options);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [leadInfo.region, leadInfo.province]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!leadInfo.region || !leadInfo.province || !leadInfo.city) {
+      return;
+    }
+    fetchPlaces({
+      level: "barangay",
+      region: leadInfo.region,
+      province: leadInfo.province,
+      city: leadInfo.city,
+    }).then((options) => {
+      if (!cancelled) setBarangays(options);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [leadInfo.region, leadInfo.province, leadInfo.city]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const canQuote =
+      fulfillmentType === "pickup" ||
+      Boolean(leadInfo.region && leadInfo.province && leadInfo.city && leadInfo.barangay);
+    if (!canQuote) {
+      return;
+    }
+
+    fetch("/api/delivery-quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fulfillmentType,
+        region: leadInfo.region,
+        regionCode: leadInfo.regionCode,
+        province: leadInfo.province,
+        provinceCode: leadInfo.provinceCode,
+        city: leadInfo.city,
+        cityCode: leadInfo.cityCode,
+        barangay: leadInfo.barangay,
+        barangayCode: leadInfo.barangayCode,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data: { quote?: DeliveryQuote }) => {
+        if (!cancelled) setQuote(data.quote ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setQuote(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    fulfillmentType,
+    leadInfo.region,
+    leadInfo.regionCode,
+    leadInfo.province,
+    leadInfo.provinceCode,
+    leadInfo.city,
+    leadInfo.cityCode,
+    leadInfo.barangay,
+    leadInfo.barangayCode,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,8 +358,6 @@ export function CheckoutClient() {
         setSaveForNextTime(true);
         return;
       }
-      // No full address saved — still prefill name/email from the pre-checkout
-      // lead gate so the visitor doesn't retype them.
       const checkoutLead = loadSavedCheckoutLead();
       if (checkoutLead) {
         setLeadInfo((current) => ({
@@ -177,10 +382,29 @@ export function CheckoutClient() {
     });
   }
 
+  function updatePlace(field: LeadField, codeField: LeadField, value: string, option: PsgcPlaceOption | null) {
+    setLeadInfo((current) => ({ ...current, [field]: value, [codeField]: option?.code ?? "" }));
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
   function focusField(field: LeadField) {
     formRef.current
       ?.querySelector<HTMLInputElement>(`[name="${field}"]`)
       ?.focus();
+  }
+
+  function setFulfillment(type: FulfillmentType) {
+    setLeadInfo((current) => ({
+      ...current,
+      fulfillmentType: type,
+    }));
+    setFieldErrors({});
+    setError(null);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -193,6 +417,13 @@ export function CheckoutClient() {
     }
 
     const errs = validate(leadInfo);
+    if (fulfillmentType === "delivery") {
+      if (!optionFor(regions, leadInfo.region)) errs.region = "Choose a valid region.";
+      if (!optionFor(provinces, leadInfo.province)) errs.province = "Choose a valid province.";
+      if (!optionFor(cities, leadInfo.city)) errs.city = "Choose a valid city or municipality.";
+      if (!optionFor(barangays, leadInfo.barangay)) errs.barangay = "Choose a valid barangay.";
+    }
+
     if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
       setError("Please fix the highlighted fields and try again.");
@@ -204,14 +435,14 @@ export function CheckoutClient() {
     try {
       const formData = new FormData();
       Object.entries(leadInfo).forEach(([key, value]) => {
-        formData.append(key, value);
+        formData.append(key, String(value ?? ""));
       });
       formData.append("country", "Philippines");
       formData.append("saveForNextTime", String(saveForNextTime));
       formData.append("pageSlug", GHL_PAGE_SLUG_HOME);
       formData.append("offer", OFFER);
       formData.append("cart", JSON.stringify(items));
-      formData.append("total", String(total));
+      formData.append("total", String(orderTotal));
 
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -220,8 +451,18 @@ export function CheckoutClient() {
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
         orderId?: string;
+        summary?: {
+          cart?: CartItem[];
+          delivery?: DeliveryQuote;
+          itemSubtotal?: number;
+          total?: number;
+        };
       };
       if (!res.ok) {
+        if (res.status === 409 && data.summary) {
+          if (Array.isArray(data.summary.cart)) replaceCart(data.summary.cart);
+          if (data.summary.delivery) setQuote(data.summary.delivery);
+        }
         setError(data.error ?? "Something went wrong. Please try again.");
         return;
       }
@@ -296,7 +537,7 @@ export function CheckoutClient() {
             required={field.required}
             aria-invalid={message ? true : undefined}
             aria-describedby={message ? errorId : field.helper ? helperId : undefined}
-            value={leadInfo[field.id]}
+            value={String(leadInfo[field.id] ?? "")}
             onChange={(e) => updateField(field.id, e.target.value)}
             className={`min-h-[3.25rem] w-full rounded-2xl border bg-brand-cream pl-12 pr-4 text-base text-brand-text placeholder:text-brand-muted/70 focus:outline-none focus:ring-2 ${
               message
@@ -331,21 +572,19 @@ export function CheckoutClient() {
         <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-serif text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl">
-              Almost done — where should we send it?
+              Almost done - where should we send it?
             </h1>
             <p className="mt-2 max-w-xl text-brand-muted">
-              Add your contact and delivery details and we&apos;ll confirm the design,
-              then generate your secure QR payment.
+              Add your contact details, choose delivery or pickup, then generate your secure QR payment.
             </p>
           </div>
           <p className="rounded-full border border-brand-gold/25 bg-brand-surface px-4 py-2 text-sm font-semibold text-brand-text shadow-craft">
             {items.length} item{items.length === 1 ? "" : "s"} ·{" "}
-            <span className="text-brand-gold">{formatPeso(total)}</span>
+            <span className="text-brand-gold">{formatPeso(orderTotal)}</span>
           </p>
         </div>
       </div>
 
-      {/* Trust strip */}
       <ul className="mb-8 grid gap-3 rounded-[20px] border border-brand-gold/20 bg-brand-cream p-4 sm:grid-cols-3">
         {TRUST_BADGES.map(({ icon: Icon, label }) => (
           <li key={label} className="flex items-center gap-2.5 text-sm text-brand-text">
@@ -370,7 +609,7 @@ export function CheckoutClient() {
               Your contact details
             </legend>
             <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
-              {fields.slice(0, 4).map(renderField)}
+              {contactFields.map(renderField)}
             </div>
           </fieldset>
 
@@ -379,26 +618,163 @@ export function CheckoutClient() {
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-cream text-brand-gold ring-1 ring-brand-gold/20" aria-hidden>
                 <Truck className="size-5" strokeWidth={1.75} />
               </span>
-              Where we&apos;ll deliver
+              Fulfillment
             </legend>
-            <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
-              {fields.slice(4).map(renderField)}
-              <div className="sm:col-span-2">
-                <label htmlFor="country" className="block text-sm font-semibold text-brand-text">
-                  Country
-                </label>
-                <div className="relative mt-2">
-                  <Globe className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-brand-gold/60" aria-hidden />
-                  <input
-                    id="country"
-                    value="Philippines"
-                    disabled
-                    className="min-h-[3.25rem] w-full rounded-2xl border border-brand-primary/12 bg-brand-primary/5 pl-12 pr-4 text-base text-brand-muted"
-                  />
-                </div>
-              </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(["delivery", "pickup"] as const).map((type) => {
+                const selected = fulfillmentType === type;
+                const Icon = type === "delivery" ? Truck : Store;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setFulfillment(type)}
+                    className={`flex min-h-20 items-center gap-3 rounded-2xl border p-4 text-left transition ${
+                      selected
+                        ? "border-brand-gold bg-brand-primary text-white shadow-craft"
+                        : "border-brand-primary/15 bg-brand-cream text-brand-text hover:border-brand-gold/50"
+                    }`}
+                  >
+                    <Icon className={`size-5 shrink-0 ${selected ? "text-brand-gold-soft" : "text-brand-gold"}`} aria-hidden />
+                    <span>
+                      <span className="block font-semibold">
+                        {type === "delivery" ? "Delivery" : "Free pickup"}
+                      </span>
+                      <span className={`mt-1 block text-xs ${selected ? "text-white/75" : "text-brand-muted"}`}>
+                        {type === "delivery" ? "Charge based on your location" : "Pick up from Java Crafts"}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </fieldset>
+
+          {fulfillmentType === "delivery" ? (
+            <fieldset className="mt-8 border-0 p-0">
+              <legend className="mb-4 flex items-center gap-3 text-base font-semibold text-brand-text">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-cream text-brand-gold ring-1 ring-brand-gold/20" aria-hidden>
+                  <MapPin className="size-5" strokeWidth={1.75} />
+                </span>
+                Delivery address
+              </legend>
+              <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  {renderField({
+                    id: "houseStreet",
+                    label: "House, street",
+                    icon: Home,
+                    autoComplete: "address-line1",
+                    required: true,
+                    placeholder: "123 Rizal St.",
+                  })}
+                </div>
+                <PlaceInput
+                  id="region"
+                  label="Region"
+                  icon={Map}
+                  value={leadInfo.region}
+                  options={regions}
+                  message={fieldErrors.region}
+                  onChange={(value, selected) => {
+                    updatePlace("region", "regionCode", value, selected);
+                    setLeadInfo((current) => ({
+                      ...current,
+                      province: "",
+                      provinceCode: "",
+                      city: "",
+                      cityCode: "",
+                      barangay: "",
+                      barangayCode: "",
+                    }));
+                  }}
+                />
+                <PlaceInput
+                  id="province"
+                  label="Province"
+                  icon={Globe}
+                  value={leadInfo.province}
+                  options={provinces}
+                  disabled={!leadInfo.region}
+                  message={fieldErrors.province}
+                  onChange={(value, selected) => {
+                    updatePlace("province", "provinceCode", value, selected);
+                    setLeadInfo((current) => ({
+                      ...current,
+                      city: "",
+                      cityCode: "",
+                      barangay: "",
+                      barangayCode: "",
+                    }));
+                  }}
+                />
+                <PlaceInput
+                  id="city"
+                  label="City / Municipality"
+                  icon={Building2}
+                  value={leadInfo.city}
+                  options={cities}
+                  disabled={!leadInfo.province}
+                  message={fieldErrors.city}
+                  onChange={(value, selected) => {
+                    updatePlace("city", "cityCode", value, selected);
+                    setLeadInfo((current) => ({
+                      ...current,
+                      barangay: "",
+                      barangayCode: "",
+                    }));
+                  }}
+                />
+                <PlaceInput
+                  id="barangay"
+                  label="Barangay"
+                  icon={MapPin}
+                  value={leadInfo.barangay}
+                  options={barangays}
+                  disabled={!leadInfo.city}
+                  message={fieldErrors.barangay}
+                  onChange={(value, selected) =>
+                    updatePlace("barangay", "barangayCode", value, selected)
+                  }
+                />
+                {renderField({
+                  id: "postalCode",
+                  label: "Postal code",
+                  icon: Hash,
+                  autoComplete: "postal-code",
+                  inputMode: "numeric",
+                  required: true,
+                  placeholder: "8000",
+                  helper: "4 digits",
+                })}
+                <div>
+                  <label htmlFor="country" className="block text-sm font-semibold text-brand-text">
+                    Country
+                  </label>
+                  <div className="relative mt-2">
+                    <Globe className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-brand-gold/60" aria-hidden />
+                    <input
+                      id="country"
+                      value="Philippines"
+                      disabled
+                      className="min-h-[3.25rem] w-full rounded-2xl border border-brand-primary/12 bg-brand-primary/5 pl-12 pr-4 text-base text-brand-muted"
+                    />
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          ) : (
+            <div className="mt-8 rounded-2xl border border-brand-gold/20 bg-brand-cream p-4 text-sm text-brand-text">
+              <p className="flex items-center gap-2 font-semibold">
+                <Check className="size-4 text-brand-gold" aria-hidden />
+                Pickup selected
+              </p>
+              <p className="mt-1 text-brand-muted">
+                We&apos;ll coordinate your pickup schedule after confirming your design.
+              </p>
+            </div>
+          )}
 
           <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-2xl border border-brand-gold/15 bg-brand-cream p-4 text-sm text-brand-text transition hover:border-brand-gold/35">
             <input
@@ -442,8 +818,7 @@ export function CheckoutClient() {
             {pending ? "Sending your request..." : "Submit order request"}
           </Button>
           <p className="mt-3 text-center text-xs text-brand-muted">
-            Submitting saves your order and creates a single-use PayMongo QR for
-            the item total.
+            Your QR includes the item total and the selected fulfillment fee.
           </p>
         </form>
 
@@ -466,20 +841,20 @@ export function CheckoutClient() {
                       <div>
                         <p className="font-semibold text-brand-text">{item.productName}</p>
                         <p className="mt-1 text-sm text-brand-muted">
-                          {item.sizeLabel} · {item.dimensions}
+                          {item.sizeLabel} · {item.dimensions} · {item.styleName}
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand-muted transition hover:bg-brand-surface hover:text-destructive"
-                        aria-label={`Remove ${item.customText}`}
+                        aria-label={`Remove ${item.customText || item.productName}`}
                       >
                         <Trash2 className="size-4" aria-hidden />
                       </button>
                     </div>
                     <p className="mt-3 text-sm text-brand-text">
-                      Text/name: <span className="font-semibold">{item.customText}</span>
+                      Text/name: <span className="font-semibold">{item.customText || "No engraving text"}</span>
                     </p>
                     <p className="mt-1 truncate text-xs text-brand-muted">
                       Photo: {item.photo.name}
@@ -493,15 +868,32 @@ export function CheckoutClient() {
             ))}
           </ul>
 
-          <div className="mt-6 border-t border-brand-primary/10 pt-5">
+          <div className="mt-6 space-y-3 border-t border-brand-primary/10 pt-5">
             <div className="flex items-center justify-between text-brand-text">
-              <span className="font-semibold">Item total</span>
-              <span className="text-xl font-bold tabular-nums">{formatPeso(total)}</span>
+              <span className="font-semibold">Item subtotal</span>
+              <span className="font-bold tabular-nums">{formatPeso(total)}</span>
             </div>
-            <p className="mt-2 text-sm text-brand-muted">
-              Pay the item total by QR after submitting. Delivery is still quoted
-              separately based on your location.
-            </p>
+            <div className="flex items-center justify-between text-brand-text">
+              <span className="font-semibold">
+                {fulfillmentType === "pickup" ? "Pickup" : "Delivery"}
+              </span>
+              <span className="font-bold tabular-nums">
+                {effectiveQuote
+                    ? formatPeso(effectiveQuote.fee)
+                    : fulfillmentType === "pickup"
+                      ? formatPeso(0)
+                      : "Choose address"}
+              </span>
+            </div>
+            {effectiveQuote?.label ? (
+              <p className="text-xs text-brand-muted">{effectiveQuote.label}</p>
+            ) : null}
+            <div className="flex items-center justify-between border-t border-brand-primary/10 pt-3 text-brand-text">
+              <span className="text-lg font-semibold">QR total</span>
+              <span className="text-2xl font-bold tabular-nums text-brand-gold">
+                {formatPeso(orderTotal)}
+              </span>
+            </div>
           </div>
         </aside>
       </div>

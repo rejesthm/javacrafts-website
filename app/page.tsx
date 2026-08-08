@@ -7,8 +7,14 @@ import { Occasions } from "@/components/sections/occasions";
 import { ProductPersonalization } from "@/components/sections/product-personalization";
 import { SocialProof } from "@/components/sections/social-proof";
 import { StatsBand } from "@/components/sections/stats-band";
+import { getPublicProduct, getPublicTestimonials } from "@/lib/firebase/site-content";
 
-export default function Home() {
+export default async function Home() {
+  const [product, testimonials] = await Promise.all([
+    getPublicProduct(),
+    getPublicTestimonials(),
+  ]);
+
   return (
     <>
       <a
@@ -22,8 +28,8 @@ export default function Home() {
         <Hero />
         <StatsBand />
         <Occasions />
-        <ProductPersonalization />
-        <SocialProof />
+        <ProductPersonalization product={product} />
+        <SocialProof content={testimonials} />
         <Faq />
         <CtaBand />
       </main>

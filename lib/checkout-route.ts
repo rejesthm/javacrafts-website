@@ -2,7 +2,10 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 
-import { CheckoutSubmissionError } from "@/lib/checkout-submission";
+import {
+  CheckoutPriceChangedError,
+  CheckoutSubmissionError,
+} from "@/lib/checkout-submission";
 import { FirebaseConfigError } from "@/lib/firebase/admin";
 import { createCheckoutOrderFromFormData } from "@/lib/firebase/orders";
 import { PaymongoApiError, PaymongoConfigError } from "@/lib/paymongo";
@@ -19,6 +22,13 @@ export async function handleCheckoutPost(request: Request) {
     const { orderId, payment } = await createCheckoutOrderFromFormData(formData);
     return NextResponse.json({ ok: true, orderId, payment });
   } catch (err) {
+    if (err instanceof CheckoutPriceChangedError) {
+      return NextResponse.json(
+        { error: err.message, summary: err.summary },
+        { status: 409 },
+      );
+    }
+
     if (err instanceof CheckoutSubmissionError) {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }

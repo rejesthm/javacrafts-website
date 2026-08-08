@@ -2,6 +2,15 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    match /site/product-images/{fileName} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /orders/{orderId}/items/{fileName} {
+      allow read, write: if false;
+    }
+
     match /{path=**} {
       allow read, write: if false;
     }

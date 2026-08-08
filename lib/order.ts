@@ -1,11 +1,11 @@
-export type ProductSizeId = "s" | "m" | "l";
+import {
+  DEFAULT_PRODUCT,
+  type EngravingProduct,
+  type EngravingStyleOption,
+  type ProductSizeOption,
+} from "@/lib/catalog";
 
-export type ProductSizeOption = {
-  id: ProductSizeId;
-  label: string;
-  dimensions: string;
-  price: number;
-};
+export type ProductSizeId = string;
 
 export type CartPhoto = {
   dataUrl: string;
@@ -16,10 +16,15 @@ export type CartPhoto = {
 
 export type CartItem = {
   id: string;
+  productId: string;
   productName: string;
   sizeId: ProductSizeId;
   sizeLabel: string;
   dimensions: string;
+  sizePrice: number;
+  styleId: string;
+  styleName: string;
+  stylePriceAdjustment: number;
   price: number;
   customText: string;
   photo: CartPhoto;
@@ -31,11 +36,17 @@ export type SavedLeadInfo = {
   email: string;
   phone: string;
   messenger: string;
+  fulfillmentType?: "delivery" | "pickup";
   houseStreet: string;
   barangay: string;
+  barangayCode?: string;
   postalCode: string;
   city: string;
+  cityCode?: string;
+  province: string;
+  provinceCode?: string;
   region: string;
+  regionCode?: string;
 };
 
 /**
@@ -59,10 +70,16 @@ export function isValidEmail(value: string) {
 export const PRODUCT_NAME = "Personalized Engraved Plaque";
 
 export const PRODUCT_SIZES: ProductSizeOption[] = [
-  { id: "s", label: "S", dimensions: "5x7 inches", price: 400 },
-  { id: "m", label: "M", dimensions: "8x6 inches", price: 650 },
-  { id: "l", label: "L", dimensions: "10x8 inches", price: 850 },
+  ...DEFAULT_PRODUCT.sizes,
 ];
+
+export const PRODUCT_STYLES: EngravingStyleOption[] = [
+  ...DEFAULT_PRODUCT.styles,
+];
+
+export function createDefaultProduct(): EngravingProduct {
+  return structuredClone(DEFAULT_PRODUCT);
+}
 
 export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 

@@ -4,13 +4,16 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { isOrderStatus, type OrderStatus } from "@/lib/admin-auth";
 import {
+  CheckoutPriceChangedError,
   buildOrderRecord,
   dataUrlToUpload,
   parseCheckoutFormData,
+  repriceCheckoutSubmission,
   type CheckoutSubmission,
   type OrderRecord,
 } from "@/lib/checkout-submission";
 import { getFirebaseDb, getFirebaseStorageBucket } from "@/lib/firebase/admin";
+import { removeUndefinedFirestoreValues } from "@/lib/firebase/firestore-data";
 import {
   forwardCheckoutLeadToGhl,
   forwardCheckoutToGhl,
@@ -24,6 +27,14 @@ import {
   type OrderPayment,
   type PublicOrderPayment,
 } from "@/lib/paymongo";
+import { getDeliverySettings, getPublicProduct } from "@/lib/firebase/site-content";
+import { DEFAULT_PRODUCT } from "@/lib/catalog";
+import {
+  BUSINESS_CATEGORY,
+  GHL_PAGE_SLUG_HOME,
+  GOAL_TAG,
+  OFFER,
+} from "@/lib/site";
 
 export type AdminOrderRecord = Omit<OrderRecord, "order" | "status"> & {
   id: string;
@@ -95,7 +106,10 @@ export async function createCheckoutOrder(submission: CheckoutSubmission) {
     photoPaths,
   });
 
-  await getFirebaseDb().collection("orders").doc(orderId).set(record);
+  await getFirebaseDb()
+    .collection("orders")
+    .doc(orderId)
+    .set(removeUndefinedFirestoreValues(record));
 
   const payment = await createPaymongoQrPayment({ orderId, submission });
   await getFirebaseDb().collection("orders").doc(orderId).update({
@@ -116,7 +130,25 @@ export async function createCheckoutOrder(submission: CheckoutSubmission) {
 }
 
 export async function createCheckoutOrderFromFormData(formData: FormData) {
-  return createCheckoutOrder(parseCheckoutFormData(formData));
+  const parsed = parseCheckoutFormData(formData);
+  const [product, deliverySettings] = await Promise.all([
+    getPublicProduct(),
+    getDeliverySettings(),
+  ]);
+  const submission = repriceCheckoutSubmission({
+    submission: parsed,
+    product,
+    deliverySettings,
+  });
+  if (Math.abs(parsed.total - submission.total) > 0.01) {
+    throw new CheckoutPriceChangedError({
+      cart: submission.cart,
+      delivery: submission.delivery,
+      itemSubtotal: submission.itemSubtotal,
+      total: submission.total,
+    });
+  }
+  return createCheckoutOrder(submission);
 }
 
 export async function saveCheckoutLead({
@@ -136,6 +168,7 @@ export async function saveCheckoutLead({
     items: Array<{
       productName: string;
       size?: string;
+      style?: string;
       customText?: string;
       price?: number;
     }>;
@@ -144,20 +177,22 @@ export async function saveCheckoutLead({
   const submittedAt = new Date().toISOString();
   const docRef = await getFirebaseDb()
     .collection("checkoutLeads")
-    .add({
-      eventType: "checkout_lead_capture",
-      submittedAt,
-      name,
-      email,
-      pageSlug: pageSlug || "home",
-      offer: offer || "",
-      cart: cart
-        ? {
-            ...cart,
-            currency: "PHP",
-          }
-        : null,
-    });
+    .add(
+      removeUndefinedFirestoreValues({
+        eventType: "checkout_lead_capture",
+        submittedAt,
+        name,
+        email,
+        pageSlug: pageSlug || "home",
+        offer: offer || "",
+        cart: cart
+          ? {
+              ...cart,
+              currency: "PHP",
+            }
+          : null,
+      }),
+    );
 
   const ghl = await forwardCheckoutLeadToGhl({
     name,
@@ -186,6 +221,52 @@ async function signedUrlFor(storagePath: string) {
   }
 }
 
+function normalizeAddress(address: Partial<OrderRecord["address"]> | undefined) {
+  return {
+    country: "Philippines" as const,
+    houseStreet: address?.houseStreet ?? "",
+    barangay: address?.barangay ?? "",
+    barangayCode: address?.barangayCode ?? "",
+    postalCode: address?.postalCode ?? "",
+    city: address?.city ?? "",
+    cityCode: address?.cityCode ?? "",
+    province: address?.province ?? "",
+    provinceCode: address?.provinceCode ?? "",
+    region: address?.region ?? "",
+    regionCode: address?.regionCode ?? "",
+  };
+}
+
+function normalizeOrderItem(
+  item: Partial<OrderRecord["order"]["items"][number]>,
+  index: number,
+): OrderRecord["order"]["items"][number] {
+  const price = Number(item.price ?? 0);
+  const stylePriceAdjustment = Number(item.stylePriceAdjustment ?? 0);
+  return {
+    lineNumber: Number(item.lineNumber ?? index + 1),
+    id: item.id ?? `legacy-${index + 1}`,
+    productName: item.productName ?? DEFAULT_PRODUCT.name,
+    productId: item.productId ?? DEFAULT_PRODUCT.id,
+    sizeId: item.sizeId ?? String(item.sizeLabel ?? ""),
+    sizeLabel: item.sizeLabel ?? "",
+    dimensions: item.dimensions ?? "",
+    sizePrice: Number(item.sizePrice ?? Math.max(0, price - stylePriceAdjustment)),
+    styleId: item.styleId ?? "no-style",
+    styleName: item.styleName ?? "No style",
+    stylePriceAdjustment,
+    price,
+    customText: item.customText ?? "",
+    createdAt: item.createdAt ?? "",
+    photo: {
+      fileName: item.photo?.fileName ?? "",
+      fileType: item.photo?.fileType ?? "",
+      fileSize: Number(item.photo?.fileSize ?? 0),
+      storagePath: item.photo?.storagePath ?? "",
+    },
+  };
+}
+
 export async function listRecentOrders(limit = 50): Promise<AdminOrderRecord[]> {
   const snapshot = await getFirebaseDb()
     .collection("orders")
@@ -193,33 +274,104 @@ export async function listRecentOrders(limit = 50): Promise<AdminOrderRecord[]> 
     .limit(limit)
     .get();
 
+  return mapAdminOrderDocs(snapshot.docs);
+}
+
+async function mapAdminOrderDocs(
+  docs: Array<{ id: string; data: () => FirebaseFirestore.DocumentData }>,
+): Promise<AdminOrderRecord[]> {
   return Promise.all(
-    snapshot.docs.map(async (doc) => {
-      const data = doc.data() as OrderRecord;
+    docs.map(async (doc) => {
+      const data = doc.data() as Partial<OrderRecord>;
       const status = isOrderStatus(data.status) ? data.status : "new";
-      const payment = data.payment ?? createPendingQrPayment(data.order.total);
+      const rawOrder = data.order ?? {
+        items: [],
+        itemCount: 0,
+        itemSubtotal: 0,
+        deliveryFee: 0,
+        total: 0,
+        currency: "PHP" as const,
+      };
+      const normalizedItems = (rawOrder.items ?? []).map(normalizeOrderItem);
+      const itemSubtotal = Number(
+        rawOrder.itemSubtotal ??
+          normalizedItems.reduce((sum, item) => sum + item.price, 0),
+      );
+      const deliveryFee = Number(rawOrder.deliveryFee ?? 0);
+      const total = Number(rawOrder.total ?? itemSubtotal + deliveryFee);
+      const payment = data.payment ?? createPendingQrPayment(total);
       const items = await Promise.all(
-        data.order.items.map(async (item) => ({
+        normalizedItems.map(async (item) => ({
           ...item,
           photo: {
             ...item.photo,
-            signedUrl: await signedUrlFor(item.photo.storagePath),
+            signedUrl: item.photo.storagePath
+              ? await signedUrlFor(item.photo.storagePath)
+              : null,
           },
         })),
       );
+      const fulfillment = data.fulfillment ?? {
+        type: "delivery" as const,
+        deliveryFee,
+        deliveryRuleId: null,
+        deliveryScope: "default" as const,
+        label: "Legacy delivery",
+      };
+      const source = data.source ?? {
+        pageSlug: GHL_PAGE_SLUG_HOME,
+        offer: OFFER,
+        businessCategory: BUSINESS_CATEGORY,
+        goal: GOAL_TAG,
+        saveForNextTime: false,
+      };
 
       return {
         ...data,
         id: doc.id,
+        orderId: data.orderId ?? doc.id,
         status,
+        submittedAt: data.submittedAt ?? "",
+        updatedAt: data.updatedAt ?? data.submittedAt ?? "",
+        customer: {
+          name: data.customer?.name ?? "",
+          email: data.customer?.email ?? "",
+          phone: data.customer?.phone ?? "",
+          messenger: data.customer?.messenger ?? "",
+        },
+        address: normalizeAddress(data.address),
+        fulfillment,
+        source,
         payment,
         order: {
-          ...data.order,
+          ...rawOrder,
+          itemCount: Number(rawOrder.itemCount ?? items.length),
+          itemSubtotal,
+          deliveryFee,
+          total,
+          currency: "PHP",
           items,
         },
       };
     }),
   );
+}
+
+export function subscribeToRecentOrders(
+  onOrders: (orders: AdminOrderRecord[]) => void,
+  onError: (error: Error) => void,
+  limit = 50,
+) {
+  return getFirebaseDb()
+    .collection("orders")
+    .orderBy("submittedAt", "desc")
+    .limit(limit)
+    .onSnapshot(
+      (snapshot) => {
+        void mapAdminOrderDocs(snapshot.docs).then(onOrders).catch(onError);
+      },
+      onError,
+    );
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
@@ -240,6 +392,28 @@ export async function getCheckoutPaymentStatus(
     orderId,
     payment: toPublicOrderPayment(payment),
   };
+}
+
+export function subscribeToCheckoutPaymentStatus(
+  orderId: string,
+  onStatus: (status: CheckoutPaymentStatus | null) => void,
+  onError: (error: Error) => void,
+) {
+  return getFirebaseDb()
+    .collection("orders")
+    .doc(orderId)
+    .onSnapshot(
+      (doc) => {
+        if (!doc.exists) {
+          onStatus(null);
+          return;
+        }
+        const data = doc.data() as OrderRecord;
+        const payment = data.payment ?? createPendingQrPayment(data.order.total);
+        onStatus({ orderId, payment: toPublicOrderPayment(payment) });
+      },
+      onError,
+    );
 }
 
 async function findOrderForPaymongoEvent(event: NormalizedPaymongoWebhookEvent) {

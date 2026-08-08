@@ -161,6 +161,7 @@ export async function forwardPaymentUpdateToGhl({
   const summaryItems = order.order.items.map((item) => ({
     productName: item.productName,
     size: item.sizeLabel,
+    style: item.styleName,
     customText: item.customText,
   }));
 
@@ -185,9 +186,12 @@ export async function forwardPaymentUpdateToGhl({
       shippingAddress: buildGhlShippingAddress(order.address),
       order: {
         itemCount: order.order.itemCount,
+        itemSubtotal: order.order.itemSubtotal,
+        deliveryFee: order.order.deliveryFee,
         total: order.order.total,
         currency: order.order.currency,
       },
+      fulfillment: order.fulfillment,
       productSummary: buildGhlProductSummary(summaryItems),
       customText: buildGhlCustomTextSummary(summaryItems),
       payment: {

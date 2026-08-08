@@ -63,9 +63,10 @@ test("builds a QR Ph payment method payload with billing and expiry", () => {
         country: "Philippines",
         houseStreet: "123 Rizal St.",
         barangay: "Maniki",
-        postalCode: "8000",
+        postalCode: "8113",
         city: "Kapalong",
-        region: "Davao del Norte",
+        province: "Davao del Norte",
+        region: "Region XI (Davao Region)",
       },
     },
   });
@@ -76,6 +77,7 @@ test("builds a QR Ph payment method payload with billing and expiry", () => {
   assert.equal(payload.data.attributes.billing.address.country, "PH");
   assert.equal(payload.data.attributes.billing.address.line1, "123 Rizal St.");
   assert.equal(payload.data.attributes.billing.address.line2, "Maniki");
+  assert.equal(payload.data.attributes.billing.address.state, "Davao del Norte");
 });
 
 test("verifies PayMongo webhook signatures against the raw body", () => {

@@ -5,60 +5,18 @@ import { Ornament } from "@/components/ui/ornament";
 import { Section } from "@/components/ui/section";
 import { motion } from "motion/react";
 import { Star } from "lucide-react";
+import type { TestimonialsContent } from "@/lib/catalog";
 
-const testimonials = [
-  {
-    text: "Sobrang ganda ng pagkakagawa! Nag-order ako ng wooden keychain para sa anniversary namin at grabe ang quality. Ang linis ng engraving, parang ang sarap hawakan. Sulit na sulit.",
-    name: "Mariel S.",
-    role: "Davao City",
-  },
-  {
-    text: "Salamat kaayo, Java Crafts! Na-impress jud ko sa kalidad sa plaque nga akong gi-order. Limpyo kaayo ang engrave ug gwapo tan-awon. Mo-order gyud ko og balik.",
-    name: "Jandro T.",
-    role: "Cebu City",
-  },
-  {
-    text: "I gave this as a graduation gift and na-iyak talaga yung ate ko. The engraving was so detailed—parang hindi machine-made. Highly recommended!",
-    name: "Shaira M.",
-    role: "Tagum City",
-  },
-  {
-    text: "Mas nindot pa ang output kaysa sa picture, grabe! Ang bilis pa sa transaction ug ang buotan mo-reply. Salamat kaayo sa inyo.",
-    name: "Aljun R.",
-    role: "Panabo City",
-  },
-  {
-    text: "Ginamit namin ito bilang pasalubong para sa buong team. Natuwa silang lahat—ang thoughtful daw. Sobrang sulit ng binayad namin.",
-    name: "Liza C.",
-    role: "Team gifts",
-  },
-  {
-    text: "Last-minute ako nag-order pero na-deliver pa rin on time, salamat! Ang linis ng engraving at ang bilis nila mag-update. Order ulit ako pag Pasko.",
-    name: "Daryl O.",
-    role: "Cagayan de Oro",
-  },
-  {
-    text: "Pihikan kaayo ko sa font ug spacing, pero gi-sunod gyud nila akong reference. Hapsay pa ang packaging, andam na ihatag nga regalo. Solid kaayo!",
-    name: "Kim P.",
-    role: "Cebu City",
-  },
-  {
-    text: "Pang-anniversary 'to ng parents ko. Tuwing nakikita nila, naiiyak sila sa tuwa. Worth every peso, promise.",
-    name: "Rhea F.",
-    role: "Anniversary gift",
-  },
-  {
-    text: "No drama—solid ang craftsmanship ug buotan kaayo ang customer service. Mo-reply dayon sila pag naa kay pangutana. Balik gyud ko ani sunod holidays.",
-    name: "Nico I.",
-    role: "Repeat customer",
-  },
-];
+export function SocialProof({ content }: { content: TestimonialsContent }) {
+  const testimonials = content.testimonials
+    .filter((testimonial) => testimonial.active)
+    .toSorted((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+  const firstColumn = testimonials.slice(0, 3);
+  const secondColumn = testimonials.slice(3, 6);
+  const thirdColumn = testimonials.slice(6, 9);
 
-const firstColumn = testimonials.slice(0, 3);
-const secondColumn = testimonials.slice(3, 6);
-const thirdColumn = testimonials.slice(6, 9);
+  if (testimonials.length === 0) return null;
 
-export function SocialProof() {
   return (
     <Section
       id="gallery"
@@ -88,8 +46,12 @@ export function SocialProof() {
               <Star key={i} className="size-4 fill-brand-gold text-brand-gold" />
             ))}
           </span>
-          <span className="text-sm font-semibold text-brand-text">4.9 / 5</span>
-          <span className="text-sm text-brand-muted">from 200+ happy orders</span>
+          <span className="text-sm font-semibold text-brand-text">
+            {content.summary.ratingText}
+          </span>
+          <span className="text-sm text-brand-muted">
+            {content.summary.happyOrdersText}
+          </span>
         </div>
         <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-brand-muted">
           Totoong reviews from real Pinoy customers — Tagalog, Bisaya, walang halong drama.

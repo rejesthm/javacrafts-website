@@ -66,6 +66,7 @@ type BillingDetails = {
     barangay: string;
     postalCode: string;
     city: string;
+    province: string;
     region: string;
   };
 };
@@ -170,7 +171,7 @@ export function buildQrPaymentMethodPayload({
             line1: billing.address.houseStreet,
             line2: billing.address.barangay,
             city: billing.address.city,
-            state: billing.address.region,
+            state: billing.address.province || billing.address.region,
             postal_code: billing.address.postalCode,
             country: "PH",
           },
