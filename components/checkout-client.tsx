@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 
 import { useCart } from "@/components/cart-provider";
+import { PlaceSelect } from "@/components/place-select";
 import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
 import { GHL_PAGE_SLUG_HOME, OFFER, getPrimaryContact } from "@/lib/site";
@@ -145,70 +146,6 @@ function validate(info: SavedLeadInfo): Partial<Record<LeadField, string>> {
     errs.postalCode = "Postal code must be 4 digits.";
   }
   return errs;
-}
-
-function PlaceInput({
-  id,
-  label,
-  icon: Icon,
-  value,
-  options,
-  disabled,
-  message,
-  onChange,
-}: {
-  id: LeadField;
-  label: string;
-  icon: LucideIcon;
-  value: string;
-  options: PsgcPlaceOption[];
-  disabled?: boolean;
-  message?: string;
-  onChange: (value: string, option: PsgcPlaceOption | null) => void;
-}) {
-  const listId = `${id}-options`;
-  const errorId = `${id}-error`;
-  return (
-    <div>
-      <label htmlFor={id} className="block text-sm font-semibold text-brand-text">
-        {label}<span className="ml-0.5 text-destructive" aria-hidden>*</span>
-      </label>
-      <div className="group relative mt-2">
-        <Icon
-          className={`pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 transition-colors ${
-            message ? "text-red-400" : "text-brand-gold/70 group-focus-within:text-brand-gold"
-          }`}
-          aria-hidden
-        />
-        <input
-          id={id}
-          name={id}
-          list={listId}
-          value={value}
-          disabled={disabled}
-          required
-          aria-invalid={message ? true : undefined}
-          aria-describedby={message ? errorId : undefined}
-          onChange={(e) => onChange(e.target.value, optionFor(options, e.target.value))}
-          className={`min-h-[3.25rem] w-full rounded-2xl border bg-brand-cream pl-12 pr-4 text-base text-brand-text placeholder:text-brand-muted/70 disabled:bg-brand-primary/5 disabled:text-brand-muted focus:outline-none focus:ring-2 ${
-            message
-              ? "border-red-400 focus:border-red-500 focus:ring-red-200"
-              : "border-brand-primary/15 focus:border-brand-gold focus:ring-brand-gold/25"
-          }`}
-        />
-        <datalist id={listId}>
-          {options.map((option) => (
-            <option key={option.code} value={option.label} />
-          ))}
-        </datalist>
-      </div>
-      {message ? (
-        <p id={errorId} role="alert" className="mt-1.5 text-sm font-medium text-red-700">
-          {message}
-        </p>
-      ) : null}
-    </div>
-  );
 }
 
 export function CheckoutClient() {
@@ -670,7 +607,7 @@ export function CheckoutClient() {
                     placeholder: "123 Rizal St.",
                   })}
                 </div>
-                <PlaceInput
+                <PlaceSelect
                   id="region"
                   label="Region"
                   icon={Map}
@@ -690,7 +627,7 @@ export function CheckoutClient() {
                     }));
                   }}
                 />
-                <PlaceInput
+                <PlaceSelect
                   id="province"
                   label="Province"
                   icon={Globe}
@@ -709,7 +646,7 @@ export function CheckoutClient() {
                     }));
                   }}
                 />
-                <PlaceInput
+                <PlaceSelect
                   id="city"
                   label="City / Municipality"
                   icon={Building2}
@@ -726,7 +663,7 @@ export function CheckoutClient() {
                     }));
                   }}
                 />
-                <PlaceInput
+                <PlaceSelect
                   id="barangay"
                   label="Barangay"
                   icon={MapPin}
