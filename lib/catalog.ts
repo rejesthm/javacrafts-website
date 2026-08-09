@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+import {
+  islandGroupForRegionCode,
+  type IslandGroup,
+} from "@/lib/places";
+
 export const SINGLE_PRODUCT_ID = "personalized-engraved-plaque";
 
 export type ProductSizeOption = {
@@ -75,16 +80,25 @@ export type DeliveryFeeRule = {
   sortOrder: number;
 };
 
+export type RegionalDeliveryFee = {
+  baseFee: number;
+  markup: number;
+};
+
+export type RegionalDeliveryFees = Record<IslandGroup, RegionalDeliveryFee>;
+
 export type DeliverySettings = {
   defaultDeliveryFee: number;
   pickupLabel: string;
   pickupAddress: string;
+  regionalFees: RegionalDeliveryFees;
   rules: DeliveryFeeRule[];
   updatedAt?: string;
 };
 
 export type DeliveryAddressInput = {
   region: string;
+  regionCode?: string;
   province: string;
   city: string;
   barangay: string;
@@ -94,7 +108,7 @@ export type DeliveryQuote = {
   fulfillmentType: FulfillmentType;
   fee: number;
   ruleId: string | null;
-  scope: DeliveryRuleScope | "pickup" | "default";
+  scope: DeliveryRuleScope | IslandGroup | "pickup" | "default";
   label: string;
 };
 
@@ -287,10 +301,17 @@ export const DEFAULT_TESTIMONIALS: TestimonialsContent = {
   ],
 };
 
+export const DEFAULT_REGIONAL_DELIVERY_FEES: RegionalDeliveryFees = {
+  mindanao: { baseFee: 85, markup: 0 },
+  visayas: { baseFee: 105, markup: 0 },
+  luzon: { baseFee: 135, markup: 0 },
+};
+
 export const DEFAULT_DELIVERY_SETTINGS: DeliverySettings = {
   defaultDeliveryFee: 180,
   pickupLabel: "Free pickup",
   pickupAddress: "Maniki, Kapalong, Davao del Norte",
+  regionalFees: DEFAULT_REGIONAL_DELIVERY_FEES,
   rules: [
     {
       id: "local-kapalong",
@@ -372,6 +393,19 @@ export const testimonialsContentSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
+const deliveryAmountSchema = z.coerce.number().int().min(0).max(500000);
+
+const regionalDeliveryFeeSchema = z.object({
+  baseFee: deliveryAmountSchema,
+  markup: deliveryAmountSchema,
+});
+
+const regionalDeliveryFeesSchema = z.object({
+  mindanao: regionalDeliveryFeeSchema,
+  visayas: regionalDeliveryFeeSchema,
+  luzon: regionalDeliveryFeeSchema,
+});
+
 export const deliveryRuleSchema = z.object({
   id: z.string().trim().min(1).max(120),
   scope: z.enum(["province", "city", "barangay"]),
@@ -379,15 +413,18 @@ export const deliveryRuleSchema = z.object({
   province: z.string().trim().min(1).max(120),
   city: z.string().trim().max(120).default(""),
   barangay: z.string().trim().max(120).default(""),
-  amount: z.coerce.number().int().min(0).max(500000),
+  amount: deliveryAmountSchema,
   active: z.coerce.boolean().default(true),
   sortOrder: z.coerce.number().int().min(0).max(1000).default(0),
 });
 
 export const deliverySettingsSchema = z.object({
-  defaultDeliveryFee: z.coerce.number().int().min(0).max(500000),
+  defaultDeliveryFee: deliveryAmountSchema,
   pickupLabel: z.string().trim().min(1).max(80),
   pickupAddress: z.string().trim().min(1).max(200),
+  regionalFees: regionalDeliveryFeesSchema.default(() =>
+    structuredClone(DEFAULT_REGIONAL_DELIVERY_FEES),
+  ),
   rules: z.array(deliveryRuleSchema).max(100),
   updatedAt: z.string().optional(),
 });
@@ -511,6 +548,19 @@ export function quoteDelivery({
           : match.scope === "city"
             ? match.city
             : match.province,
+    };
+  }
+
+  const islandGroup = islandGroupForRegionCode(address.regionCode ?? "");
+  if (islandGroup) {
+    const regionalFee = settings.regionalFees[islandGroup];
+    const label = `${islandGroup[0]!.toUpperCase()}${islandGroup.slice(1)} delivery`;
+    return {
+      fulfillmentType,
+      fee: regionalFee.baseFee + regionalFee.markup,
+      ruleId: null,
+      scope: islandGroup,
+      label,
     };
   }
 
