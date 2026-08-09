@@ -9,13 +9,12 @@ import { updateOrderStatus } from "@/lib/firebase/orders";
 import {
   DEFAULT_PRODUCT,
   normalizeSlug,
-  type DeliveryFeeRule,
-  type DeliveryRuleScope,
   type EngravingStyleOption,
   type ProductImage,
   type ProductSizeOption,
   type Testimonial,
 } from "@/lib/catalog";
+import { parseDeliverySettingsForm } from "@/lib/delivery-settings-form";
 import {
   deleteProductImage,
   getPublicProduct,
@@ -54,11 +53,6 @@ function formNumber(value: string, fallback = 0) {
 
 function indexedActive(formData: FormData, key: string, index: number) {
   return formData.getAll(key).map(String).includes(String(index));
-}
-
-function deliveryRuleScope(value: string): DeliveryRuleScope {
-  if (value === "barangay" || value === "city") return value;
-  return "province";
 }
 
 export async function saveCatalogAction(formData: FormData) {
@@ -187,42 +181,7 @@ export async function saveTestimonialsAction(formData: FormData) {
 
 export async function saveDeliveryAction(formData: FormData) {
   await requireAdminSession();
-  const scopes = formStrings(formData, "ruleScope");
-  const regions = formStrings(formData, "ruleRegion");
-  const provinces = formStrings(formData, "ruleProvince");
-  const cities = formStrings(formData, "ruleCity");
-  const barangays = formStrings(formData, "ruleBarangay");
-  const amounts = formStrings(formData, "ruleAmount");
-  const ids = formStrings(formData, "ruleId");
-
-  const rules: DeliveryFeeRule[] = scopes
-    .map((scope, index) => ({
-      id:
-        ids[index] ||
-        normalizeSlug([
-          scope,
-          regions[index],
-          provinces[index],
-          cities[index],
-          barangays[index],
-        ].filter(Boolean).join("-")),
-      scope: deliveryRuleScope(scope),
-      region: regions[index] ?? "",
-      province: provinces[index] ?? "",
-      city: cities[index] ?? "",
-      barangay: barangays[index] ?? "",
-      amount: formNumber(amounts[index] ?? "0"),
-      active: indexedActive(formData, "ruleActive", index),
-      sortOrder: index + 1,
-    }))
-    .filter((rule) => rule.id && rule.region && rule.province);
-
-  await saveDeliverySettings({
-    defaultDeliveryFee: formNumber(String(formData.get("defaultDeliveryFee") ?? "0")),
-    pickupLabel: String(formData.get("pickupLabel") ?? "Free pickup").trim(),
-    pickupAddress: String(formData.get("pickupAddress") ?? "").trim(),
-    rules,
-  });
+  await saveDeliverySettings(parseDeliverySettingsForm(formData));
   revalidatePath("/checkout");
   revalidatePath("/admin/delivery");
 }
