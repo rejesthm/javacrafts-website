@@ -2,6 +2,8 @@ import psgcSnapshot from "@/data/psgc-q1-2026.json";
 
 export type PsgcPlaceLevel = "region" | "province" | "city" | "barangay";
 
+export type IslandGroup = "mindanao" | "visayas" | "luzon";
+
 export type PsgcPlaceOption = {
   code: string;
   label: string;
@@ -30,6 +32,31 @@ type PsgcSnapshotPlace = {
 };
 
 const places = psgcSnapshot.places as PsgcSnapshotPlace[];
+
+const ISLAND_GROUP_BY_REGION_CODE: Readonly<Record<string, IslandGroup>> = {
+  "0100000000": "luzon",
+  "0200000000": "luzon",
+  "0300000000": "luzon",
+  "0400000000": "luzon",
+  "0500000000": "luzon",
+  "0600000000": "visayas",
+  "0700000000": "visayas",
+  "0800000000": "visayas",
+  "0900000000": "mindanao",
+  "1000000000": "mindanao",
+  "1100000000": "mindanao",
+  "1200000000": "mindanao",
+  "1300000000": "luzon",
+  "1400000000": "luzon",
+  "1600000000": "mindanao",
+  "1700000000": "luzon",
+  "1800000000": "visayas",
+  "1900000000": "mindanao",
+};
+
+export function islandGroupForRegionCode(regionCode: string): IslandGroup | null {
+  return ISLAND_GROUP_BY_REGION_CODE[regionCode.trim()] ?? null;
+}
 
 function sameLabel(a: string, b: string) {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
