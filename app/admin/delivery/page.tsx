@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { MapPin, Settings2, Truck } from "lucide-react";
 
 import { saveDeliveryAction } from "@/app/admin/actions";
+import { AdminRegionalDeliveryFees } from "@/components/admin-regional-delivery-fees";
 import { AdminShell } from "@/components/admin-shell";
 import { getAdminSession } from "@/lib/admin-session";
 import { getDeliverySettings } from "@/lib/firebase/site-content";
@@ -113,6 +114,14 @@ export default async function AdminDeliveryPage() {
               />
             </div>
           </div>
+        </SectionCard>
+
+        <SectionCard
+          icon={MapPin}
+          title="Regional Delivery Fees"
+          description="Base fee plus markup applies across each island group. More specific active rules still take priority."
+        >
+          <AdminRegionalDeliveryFees initialFees={settings.regionalFees} />
         </SectionCard>
 
         {/* Fee rules table */}
