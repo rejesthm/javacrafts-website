@@ -128,7 +128,7 @@ export default async function AdminDeliveryPage() {
         <SectionCard
           icon={MapPin}
           title="Fee Rules"
-          description="Matching order: barangay overrides city, city overrides province, then the nationwide default applies."
+          description="Matching order: barangay, city, and province overrides apply first, followed by the regional fee and the nationwide default for unclassified addresses."
         >
           <div className="overflow-x-auto -mx-1">
             <table className="w-full text-sm min-w-[800px]">

@@ -393,7 +393,7 @@ export const testimonialsContentSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-const deliveryAmountSchema = z.coerce.number().int().min(0).max(500000);
+const deliveryAmountSchema = z.number().int().min(0).max(500000);
 
 const regionalDeliveryFeeSchema = z.object({
   baseFee: deliveryAmountSchema,

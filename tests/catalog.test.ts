@@ -46,6 +46,24 @@ test("defaults old delivery documents to the agreed regional fees", () => {
   });
 });
 
+test("rejects malformed stored regional delivery amounts", () => {
+  for (const invalidBaseFee of [null, false, "", "   ", 12.5, -1, 500001]) {
+    const parsed = deliverySettingsSchema.safeParse({
+      defaultDeliveryFee: 180,
+      pickupLabel: "Free pickup",
+      pickupAddress: "Maniki, Kapalong, Davao del Norte",
+      rules: [],
+      regionalFees: {
+        mindanao: { baseFee: invalidBaseFee, markup: 0 },
+        visayas: { baseFee: 105, markup: 0 },
+        luzon: { baseFee: 135, markup: 0 },
+      },
+    });
+
+    assert.equal(parsed.success, false, `accepted ${JSON.stringify(invalidBaseFee)}`);
+  }
+});
+
 test("adds flat markups to regional base delivery fees", () => {
   const settings = {
     ...DEFAULT_DELIVERY_SETTINGS,
